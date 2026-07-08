@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+  }
+
+  body {
+    background-color: #040714;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(20, 24, 48, 0.4) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, rgba(13, 20, 36, 0.5) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(26, 17, 43, 0.4) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+  }
+}
+
+/* Custom Scrollbar for visual excellence */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #02040b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #111827;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1f2937;
+}
+
+/* Dynamic background color transition for screen wrapper */
+.min-h-screen {
+  background-color: #0b0914;
+  transition: background-color 0.3s ease;
+}
+
+.light-mode.min-h-screen,
+.light-mode .min-h-screen {
+  background-color: transparent !important;
+}
+
+/* Glassmorphic custom classes for navy base */
+.glass-panel {
+  background: rgba(8, 12, 28, 0.72) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+}
+
+.neon-border-emerald {
+  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.2);
+}
+
+.neon-border-purple {
+  box-shadow: 0 0 15px -3px rgba(139, 92, 246, 0.2);
+}
+
+/* Contribution Cell animation */
+.heatmap-cell {
+  transition: transform 0.15s ease;
+}
+.heatmap-cell:hover {
+  transform: scale(1.25);
+  z-index: 10;
+}
+
+/* Light mode theme style overrides */
+.light-mode {
+  color: #1e293b !important;
+}
+
+.light-mode .glass-panel {
+  background: rgba(245, 243, 255, 0.52) !important;
+  border: 1px solid rgba(168, 85, 247, 0.12) !important;
+  box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.06) !important;
+}
+
+.light-mode text-white,
+.light-mode .text-white,
+.light-mode .text-gray-100 {
+  color: #0f172a !important;
+}
+
+.light-mode .text-gray-200,
+.light-mode .text-gray-300,
+.light-mode .text-gray-400 {
+  color: #334155 !important;
+}
+
+.light-mode .text-gray-500 {
+  color: #64748b !important;
+}
+
+.light-mode .bg-gray-900,
+.light-mode .bg-gray-955,
+.light-mode .bg-gray-950\/30,
+.light-mode .bg-gray-950\/40,
+.light-mode .bg-gray-950\/60 {
+  background-color: #f8fafc !important;
+}
+
+.light-mode .bg-gray-900\/30 {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.light-mode .bg-gray-950 {
+  background-color: #f1f5f9 !important;
+}
+
+.light-mode .border-gray-800,
+.light-mode .border-gray-850,
+.light-mode .border-gray-855 {
+  border-color: #e2e8f0 !important;
+}
+
+.light-mode input,
+.light-mode select,
+.light-mode textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.light-mode tr {
+  border-bottom-color: #e2e8f0 !important;
+}
+.light-mode tr:hover {
+  background-color: rgba(15, 23, 42, 0.015) !important;
+}
+
+.light-mode .recharts-text {
+  fill: #334155 !important;
+}
+
+.light-mode .bg-gray-800 {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+.light-mode .bg-gray-800:hover {
+  background-color: #cbd5e1 !important;
+}
+
+.light-mode .bg-gray-850,
+.light-mode .bg-gray-955 {
+  background-color: #f1f5f9 !important;
+}
+
+.light-mode .text-indigo-400 {
+  color: #4f46e5 !important;
+}
+
+.light-mode .text-emerald-400 {
+  color: #059669 !important;
+}
+
+.light-mode .text-purple-400 {
+  color: #7c3aed !important;
+}
+
+/* Light mode header and navbar overrides */
+.light-mode header {
+  background-color: rgba(245, 243, 255, 0.35) !important;
+  border-bottom-color: rgba(168, 85, 247, 0.10) !important;
+}
+
+.light-mode header span.text-xl,
+.light-mode header span.text-xl span,
+.light-mode header select,
+.light-mode header select option,
+.light-mode header nav button,
+.light-mode header span.text-2xs,
+.light-mode header button {
+  color: #000000 !important;
+}
+
+/* Make switcher dropdown and navigation pills gorgeous in light mode */
+.light-mode header select {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(168, 85, 247, 0.20) !important;
+}
+
+.light-mode header select option {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.light-mode header nav {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(168, 85, 247, 0.15) !important;
+}
+
+.light-mode header nav button {
+  color: #374151 !important; /* dark gray for inactive */
+}
+
+.light-mode header nav button:hover {
+  color: #000000 !important;
+}
+
+.light-mode header nav button:not(.text-gray-400) {
+  background-color: #ffffff !important;
+  border-color: rgba(168, 85, 247, 0.25) !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 12px -2px rgba(168, 85, 247, 0.12) !important;
+}
+
+/* User profile capsule */
+.light-mode header .bg-white\/\[0\.03\],
+.light-mode header .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(168, 85, 247, 0.15) !important;
+}
