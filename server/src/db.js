@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
@@ -9,7 +9,8 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-let isMongoConnected = false;
+let isSupabaseConnected = false;
+let supabase = null;
 
 // Custom simple file database client for fallback
 class JsonDb {
@@ -38,29 +39,44 @@ class JsonDb {
 const jsonDb = new JsonDb();
 
 async function connectDB() {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.warn('⚠️ No MONGODB_URI found in environment. Falling back to local JSON database storage in server/data/');
-    exports.isMongoConnected = false;
+  let supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('⚠️ No SUPABASE_URL or SUPABASE_KEY found in environment. Falling back to local JSON database storage in server/data/');
+    isSupabaseConnected = false;
     return;
   }
 
+  // Auto-convert postgresql:// connection string to API HTTPS URL if input as database URI
+  if (supabaseUrl.startsWith('postgresql://')) {
+    const match = supabaseUrl.find || supabaseUrl.match(/postgres\.([^:@]+)/);
+    if (match && match[1]) {
+      console.log(`🔌 Detected postgresql:// URI scheme in SUPABASE_URL. Automatically converting to HTTPS API REST endpoint: https://${match[1]}.supabase.co`);
+      supabaseUrl = `https://${match[1]}.supabase.co`;
+    }
+  }
+
   try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3000
-    });
-    exports.isMongoConnected = true;
-    console.log('🔌 Connected to MongoDB successfully.');
+    supabase = createClient(supabaseUrl, supabaseKey);
+    // Simple test query to check connectivity
+    const { data, error } = await supabase.from('users').select('id').limit(1);
+    if (error && error.code !== 'PGRST116') { // PGRST116 is empty table or table not found (handled gracefully)
+      throw error;
+    }
+    isSupabaseConnected = true;
+    console.log('🔌 Connected to Supabase successfully.');
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
-    console.warn('⚠️ Falling back to local JSON database storage.');
-    exports.isMongoConnected = false;
+    console.error('❌ Supabase Connection/Config Error:', error.message);
+    console.warn('⚠️ Falling back to local JSON database storage. Make sure you run the setup SQL migrations in Supabase.');
+    isSupabaseConnected = false;
   }
 }
 
 module.exports = {
   connectDB,
   jsonDb,
-  get isMongoConnected() { return isMongoConnected; },
-  set isMongoConnected(val) { isMongoConnected = val; }
+  get isSupabaseConnected() { return isSupabaseConnected; },
+  get supabase() { return supabase; }
 };
+

@@ -130,7 +130,7 @@ export default function PersonalTab(props) {
                 </p>
               </div>
 
-              <div className="glass-panel p-5 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden">
+              <div className="glass-panel p-5 rounded-2xl shadow-xl flex flex-col justify-between relative overflow-hidden ai-card-highlight">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl pointer-events-none"></div>
                 
                 <div className="flex items-center gap-1.5">

@@ -41,6 +41,70 @@ export default function SettlementsManager({
     );
   }
 
+  const handleBroadcastAllSettlements = () => {
+    if (!settlement || !settlement.transfers || settlement.transfers.length === 0) {
+      alert("No pending transfers to broadcast!");
+      return;
+    }
+
+    // 1. Build the summary message
+    let messageText = `📊 *CO-PAY SPLIT SETTLEMENT OVERVIEW*\n`;
+    messageText += `Workspace: *${activeHome?.name || 'Shared Home'}*\n`;
+    messageText += `Here are the net transfers needed to settle the dues:\n\n`;
+    
+    settlement.transfers.forEach((t) => {
+      messageText += `💸 *${t.fromName}* owes *${t.toName}* 👉 *₹${t.amount}*\n`;
+    });
+    
+    messageText += `\nPlease clear outstanding balances using UPI QR codes inside the Co-Pay app! 🙏`;
+
+    // 2. Open WhatsApp Web / WhatsApp Desktop to broadcast
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(messageText)}`;
+    window.open(waUrl, '_blank');
+
+    // 3. Post to the internal messenger "Flat Mate Squad" (c2) group chat if exists
+    try {
+      const storedMsgs = localStorage.getItem('co_pay_messenger_messages');
+      const messagesMap = storedMsgs ? JSON.parse(storedMsgs) : {};
+      
+      const newMsgObj = {
+        id: 'msg-' + Math.random().toString(36).substring(2, 9),
+        senderId: 'system',
+        senderName: 'System Broadcast',
+        text: messageText.replace(/\*/g, ''), // strip markdown bold stars for cleaner output in app
+        timestamp: new Date().toISOString()
+      };
+
+      const chatGroupId = 'c2'; 
+      if (!messagesMap[chatGroupId]) {
+        messagesMap[chatGroupId] = [];
+      }
+      messagesMap[chatGroupId].push(newMsgObj);
+      localStorage.setItem('co_pay_messenger_messages', JSON.stringify(messagesMap));
+
+      // Also update the chat thread's lastMessage and timestamp
+      const storedChats = localStorage.getItem('co_pay_messenger_chats');
+      if (storedChats) {
+        const chatsList = JSON.parse(storedChats);
+        const updatedChats = chatsList.map(c => {
+          if (c.id === chatGroupId) {
+            return {
+              ...c,
+              lastMessage: `System Broadcast: Settlement overview calculated.`,
+              timestamp: new Date().toISOString()
+            };
+          }
+          return c;
+        });
+        localStorage.setItem('co_pay_messenger_chats', JSON.stringify(updatedChats));
+      }
+      
+      alert("Calculated and posted summary to 'Flat Mate Squad' group chat & launched WhatsApp!");
+    } catch (e) {
+      console.error("Internal chat message broadcast failed", e);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -83,9 +147,21 @@ export default function SettlementsManager({
 
           {/* Split Settlement Matrix */}
           <div className="border-t border-white/[0.04] pt-5 space-y-4">
-            <div>
-              <h3 className="text-sm font-mono text-gray-400 uppercase tracking-wider">Split Settlement Matrix</h3>
-              <p className="text-xs text-gray-500 mt-1">Roommate debts that must be cleared via bank/UPI transfers.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-mono text-gray-400 uppercase tracking-wider">Split Settlement Matrix</h3>
+                <p className="text-xs text-gray-500 mt-1">Roommate debts that must be cleared via bank/UPI transfers.</p>
+              </div>
+              {settlement.transfers && settlement.transfers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBroadcastAllSettlements}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-mono px-3.5 py-1.5 rounded-xl text-3xs font-bold transition-all cursor-pointer shadow-md inline-flex items-center gap-1"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                  <span>Broadcast Summary</span>
+                </button>
+              )}
             </div>
 
             {settlement.transfers.length === 0 ? (

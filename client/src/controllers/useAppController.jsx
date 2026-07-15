@@ -5,7 +5,7 @@ import { calculateSettlementsData } from '../utils/settlementUtils';
 import confetti from 'canvas-confetti';
 
 export default function useAppController() {
-  const [theme, setTheme] = useState(localStorage.getItem('copay_theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('copay_theme') || 'light');
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
