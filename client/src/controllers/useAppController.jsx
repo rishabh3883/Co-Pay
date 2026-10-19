@@ -337,7 +337,12 @@ export default function useAppController() {
 
   const loadData = async () => {
     try {
-      const userProfile = await apiFetch('/auth/me');
+      let userProfile = null;
+      try {
+        userProfile = await apiFetch('/auth/me');
+      } catch (meErr) {
+        console.warn('Could not fetch /auth/me, proceeding with cached profile:', meErr.message);
+      }
       
       const savedEmail = localStorage.getItem('copay_user_email') || localStorage.getItem('mockEmail');
       const savedName = localStorage.getItem('copay_user_name') || localStorage.getItem('mockName');
@@ -388,6 +393,7 @@ export default function useAppController() {
         const savedHomeId = localStorage.getItem('lastHomeId');
         const defaultHome = combinedHomes.find(h => h.id === savedHomeId) || combinedHomes[0];
         setActiveHomeId(defaultHome.id);
+        setActiveHome(defaultHome);
       }
     } catch (err) {
       loadOfflineFallback();

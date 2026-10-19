@@ -16,6 +16,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/auth/me"
+  to = "/.netlify/functions/me"
+  status = 200
+
+[[redirects]]
   from = "/api/homes/join"
   to = "/.netlify/functions/join"
   status = 200
@@ -28,6 +33,16 @@
 [[redirects]]
   from = "/api/homes/*"
   to = "/.netlify/functions/homes"
+  status = 200
+
+[[redirects]]
+  from = "/api/expenses"
+  to = "/.netlify/functions/expenses"
+  status = 200
+
+[[redirects]]
+  from = "/api/expenses/*"
+  to = "/.netlify/functions/expenses"
   status = 200
 
 [[redirects]]

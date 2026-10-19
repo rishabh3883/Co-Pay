@@ -1,6 +1,9 @@
 /api/auth/login     /.netlify/functions/login    200
 /api/auth/register  /.netlify/functions/register 200
+/api/auth/me        /.netlify/functions/me       200
 /api/homes/join     /.netlify/functions/join     200
 /api/homes          /.netlify/functions/homes    200
 /api/homes/*        /.netlify/functions/homes    200
+/api/expenses       /.netlify/functions/expenses 200
+/api/expenses/*     /.netlify/functions/expenses 200
 /*                  /index.html                  200

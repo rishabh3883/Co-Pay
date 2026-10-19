@@ -90,6 +90,9 @@ export default function AppView() {
     handleLogout, handleAuthSubmit,
   } = appState;
 
+  // Resolved active home fallback
+  const currentHome = activeHome || homes.find(h => h.id === activeHomeId) || (homes.length > 0 ? homes[0] : null);
+
   // Helper: check if current user created a room
   const isRoomCreatedByUser = (h) => {
     if (!h) return false;
@@ -270,7 +273,7 @@ export default function AppView() {
   // ══════════════════════════════════════════════════════════════════
   // ── STEP 2: ROOM ONBOARDING SCREEN (JOIN OR CREATE ROOM) ──
   // ══════════════════════════════════════════════════════════════════
-  if (homes.length === 0 || !activeHomeId) {
+  if (homes.length === 0) {
     return (
       <div className="min-h-screen bg-[#F0F0F0] text-[#121212] font-bauhaus flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden selection:bg-[#F0C020]">
         {/* Background Decorative Shapes */}
@@ -527,10 +530,10 @@ export default function AppView() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] inline-block animate-pulse shrink-0" />
-                <p className="text-xs font-black uppercase truncate text-[#121212]">{activeHome?.name || 'Room'}</p>
+                <p className="text-xs font-black uppercase truncate text-[#121212]">{currentHome?.name || 'Room'}</p>
               </div>
               <p className="text-[10px] font-mono text-[#555] truncate mt-0.5">
-                Code: {activeHome?.inviteCode || activeHome?.joinCode || activeHome?.id}
+                Code: {currentHome?.inviteCode || currentHome?.joinCode || currentHome?.id}
               </p>
             </div>
             <button
@@ -624,7 +627,7 @@ export default function AppView() {
             title="Switch or Create Flat Room"
           >
             <HomeIcon className="w-3.5 h-3.5 text-[#1040C0]" />
-            <span className="truncate max-w-[90px] sm:max-w-[150px]">{activeHome?.name || 'Select Room'}</span>
+            <span className="truncate max-w-[90px] sm:max-w-[150px]">{currentHome?.name || 'Select Room'}</span>
             <span className="bg-[#1040C0] text-white text-[9px] px-1 font-mono font-black border border-[#121212]">
               {homes?.length || 1} {homes?.length === 1 ? 'ROOM' : 'ROOMS'}
             </span>
@@ -679,7 +682,7 @@ export default function AppView() {
           </button>
 
           {/* Quick Add Member Button */}
-          {activeHome && (
+          {currentHome && (
             <button
               onClick={() => setIsAddMemberModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1040C0] hover:bg-[#0c3196] text-white border-3 border-[#121212] text-xs font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
@@ -711,7 +714,7 @@ export default function AppView() {
         <ReceiptScannerModal
           isOpen={isReceiptScannerOpen}
           onClose={() => setIsReceiptScannerOpen(false)}
-          activeHome={activeHome}
+          activeHome={currentHome}
           user={user}
           onExpenseAdded={handleReceiptExpenseAdded}
         />
@@ -720,7 +723,7 @@ export default function AppView() {
         <AddMemberModal
           isOpen={isAddMemberModalOpen}
           onClose={() => setIsAddMemberModalOpen(false)}
-          activeHome={activeHome}
+          activeHome={currentHome}
           user={user}
           onAddMember={handleAddRoommate}
           onRemoveMember={handleRemoveRoommate}
@@ -885,7 +888,7 @@ export default function AppView() {
         {activeTab === 'contributions' && (
           <ContributionDashboard
             user={appState.user}
-            activeHome={appState.activeHome}
+            activeHome={currentHome}
             activeHomeId={appState.activeHomeId}
             apiFetch={appState.apiFetch}
             isBackendConnected={appState.isBackendConnected}

@@ -1,15 +1,15 @@
-const SUPABASE_REST = 'https://vganmmygqhvkrvsxpcks.supabase.co/rest/v1';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnYW5tbXlncWh2a3J2c3hwY2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDQ4OTMsImV4cCI6MjEwNzk4MDg5M30.8eyKKRZb5RixIcCz-aIoajVyNAByMJn1Cv8aHyDKLyU';
+const SUPABASE_REST = process.env.SUPABASE_REST_URL || 'https://vganmmygqhvkrvsxpcks.supabase.co/rest/v1';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnYW5tbXlncWh2a3J2c3hwY2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDQ4OTMsImV4cCI6MjEwNzk4MDg5M30.8eyKKRZb5RixIcCz-aIoajVyNAByMJn1Cv8aHyDKLyU';
 
 const headers = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS'
 };
 
 async function populateHomeMembers(home, allUsers) {
-  const memberIds = Array.isArray(home.members) ? home.members : [];
+  const memberIds = Array.isArray(home.members) ? [...home.members] : [];
   if (home.adminId && !memberIds.includes(home.adminId)) {
     memberIds.unshift(home.adminId);
   }
@@ -56,17 +56,32 @@ exports.handler = async (event) => {
   let authUserName = 'Roommate';
   const authHeader = event.headers.authorization || event.headers.Authorization || '';
   if (authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    try {
-      const parts = token.split('.');
+    const rawToken = authHeader.substring(7);
+    if (rawToken.startsWith('jwt_')) {
+      try {
+        const decoded = JSON.parse(Buffer.from(rawToken.substring(4), 'base64').toString('utf8'));
+        if (decoded.userId || decoded.id) authUserId = decoded.userId || decoded.id;
+        if (decoded.email) authUserEmail = decoded.email.toLowerCase();
+        if (decoded.name) authUserName = decoded.name;
+      } catch (_) {}
+    } else {
+      const parts = rawToken.split('.');
       if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-        if (payload.userId || payload.id) authUserId = payload.userId || payload.id;
-        if (payload.email) authUserEmail = payload.email.toLowerCase();
-        if (payload.name) authUserName = payload.name;
+        try {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          if (payload.userId || payload.id) authUserId = payload.userId || payload.id;
+          if (payload.email) authUserEmail = payload.email.toLowerCase();
+          if (payload.name) authUserName = payload.name;
+        } catch (_) {}
       }
-    } catch (_) {}
+    }
   }
+
+  // Check if request is for a specific home ID (e.g., /api/homes/:homeId)
+  const pathParts = (event.path || '').split('/').filter(Boolean);
+  const requestedHomeId = (pathParts.length > 2 && pathParts[pathParts.length - 1] !== 'homes' && pathParts[pathParts.length - 1] !== 'join')
+    ? pathParts[pathParts.length - 1]
+    : null;
 
   // POST: Create Home
   if (event.httpMethod === 'POST') {
@@ -89,7 +104,7 @@ exports.handler = async (event) => {
         createdAt
       };
 
-      const insertRes = await fetch(`${SUPABASE_REST}/homes`, {
+      await fetch(`${SUPABASE_REST}/homes`, {
         method: 'POST',
         headers: {
           apikey: SUPABASE_KEY,
@@ -120,7 +135,7 @@ exports.handler = async (event) => {
     }
   }
 
-  // GET: Fetch all homes
+  // GET: Fetch all homes or a single home
   if (event.httpMethod === 'GET') {
     try {
       const [queryRes, usersRes] = await Promise.all([
@@ -136,6 +151,25 @@ exports.handler = async (event) => {
         const allHomes = await queryRes.json();
         const allUsers = usersRes.ok ? await usersRes.json() : [];
 
+        // If a specific home was requested by ID
+        if (requestedHomeId) {
+          const specific = (allHomes || []).find(h => h.id === requestedHomeId || h.inviteCode === requestedHomeId);
+          if (specific) {
+            const populated = await populateHomeMembers(specific, allUsers);
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify(populated)
+            };
+          }
+          return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ message: 'Room not found' })
+          };
+        }
+
+        // Return user's homes
         const matchingHomes = (allHomes || []).filter(h => {
           if (!authUserId || authUserId === 'usr_me') return true;
           return h.adminId === authUserId || 
@@ -143,6 +177,7 @@ exports.handler = async (event) => {
                  (authUserEmail && Array.isArray(h.members) && h.members.includes(authUserEmail));
         });
 
+        // Always fallback to all homes so user never gets stuck
         const targets = matchingHomes.length > 0 ? matchingHomes : (allHomes || []);
         const populatedHomes = await Promise.all(targets.map(h => populateHomeMembers(h, allUsers)));
 

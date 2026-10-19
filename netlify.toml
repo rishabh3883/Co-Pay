@@ -5,7 +5,7 @@
 [functions]
   directory = "netlify/functions"
 
-# API Route redirects to Netlify Serverless Functions
+# 1. Specific API endpoints
 [[redirects]]
   from = "/api/auth/login"
   to = "/.netlify/functions/login"
@@ -14,6 +14,11 @@
 [[redirects]]
   from = "/api/auth/register"
   to = "/.netlify/functions/register"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/me"
+  to = "/.netlify/functions/me"
   status = 200
 
 [[redirects]]
@@ -29,6 +34,16 @@
 [[redirects]]
   from = "/api/homes/*"
   to = "/.netlify/functions/homes"
+  status = 200
+
+[[redirects]]
+  from = "/api/expenses"
+  to = "/.netlify/functions/expenses"
+  status = 200
+
+[[redirects]]
+  from = "/api/expenses/*"
+  to = "/.netlify/functions/expenses"
   status = 200
 
 # Catch-all redirect for Single Page Application (SPA) routing
