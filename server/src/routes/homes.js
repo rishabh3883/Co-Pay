@@ -104,22 +104,40 @@ router.get('/:homeId', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Home workspace not found.' });
     }
 
-    if (!home.members.includes(req.userId)) {
+    const memberIds = Array.isArray(home.members) ? home.members : [];
+    const isMember = memberIds.some(m => {
+      if (!m) return false;
+      if (typeof m === 'string') return m === req.userId;
+      return m.id === req.userId || m._id === req.userId;
+    });
+
+    if (home.adminId !== req.userId && !isMember) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
-    // Populate members
+    // Populate all members including admin
+    const allMemberIds = Array.isArray(home.members) ? [...home.members] : [];
+    if (home.adminId && !allMemberIds.includes(home.adminId)) {
+      allMemberIds.unshift(home.adminId);
+    }
+
     const membersDetail = [];
-    for (const memberId of home.members) {
-      const user = await dbStore.findUserById(memberId);
+    for (const memberId of allMemberIds) {
+      const cleanId = (typeof memberId === 'object' && memberId !== null) ? (memberId.id || memberId._id) : memberId;
+      const user = await dbStore.findUserById(cleanId);
       if (user) {
         membersDetail.push({
           id: user.id,
           name: user.name,
           email: user.email,
-          streaks: user.streaks,
-          badges: user.badges
+          phone: user.phone || '',
+          whatsapp: user.phone || '',
+          upiId: user.upiId || '',
+          streaks: user.streaks || 1,
+          badges: user.id === home.adminId ? ['Creator'] : (user.badges || ['Roommate'])
         });
+      } else if (typeof memberId === 'object' && memberId !== null) {
+        membersDetail.push(memberId);
       }
     }
 

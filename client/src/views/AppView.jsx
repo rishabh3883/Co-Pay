@@ -753,39 +753,60 @@ export default function AppView() {
         {/* Workspace Quick Roster Banner - Shows who created the room & all roommates */}
         {currentHome && (
           <div className="bg-white border-4 border-[#121212] p-3 sm:p-4 shadow-[5px_5px_0px_0px_#121212] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-[#1040C0] text-white flex items-center justify-center border-2 border-[#121212] shadow-[2px_2px_0px_0px_#121212]">
-                <Users className="w-4 h-4" />
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div className="w-9 h-9 bg-[#1040C0] text-white flex items-center justify-center border-2 border-[#121212] shadow-[2px_2px_0px_0px_#121212] shrink-0">
+                <Users className="w-5 h-5" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs sm:text-sm font-black uppercase text-[#121212]">
                     ROOM: {currentHome.name}
                   </span>
                   <span className="bg-[#F0C020] text-[#121212] text-3xs font-mono font-black px-2 py-0.5 border border-[#121212]">
-                    CODE: {currentHome.inviteCode || currentHome.joinCode || currentHome.id}
+                    INVITE CODE: <strong className="select-all underline">{currentHome.inviteCode || currentHome.joinCode || currentHome.id}</strong>
+                  </span>
+                  <span className="text-3xs font-mono text-gray-500 font-bold">
+                    ({currentHome.members?.length || 1} Member{currentHome.members?.length === 1 ? '' : 's'} in Room)
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-2xs font-mono text-[#555] mt-0.5 flex-wrap">
-                  <span>Roommates ({currentHome.members?.length || 1}):</span>
-                  {currentHome.members?.map((m, idx) => (
-                    <span 
-                      key={m.id || idx}
-                      className={`px-1.5 py-0.2 border border-[#121212] font-black uppercase text-3xs ${
-                        m.id === currentHome.adminId 
-                          ? 'bg-[#10B981] text-white' 
-                          : 'bg-[#F0F0F0] text-[#121212]'
-                      }`}
-                      title={m.id === currentHome.adminId ? 'Room Creator / Admin' : 'Joined Roommate'}
-                    >
-                      {m.name || 'Roommate'} {m.id === currentHome.adminId ? '★ (ADMIN)' : ''}
-                    </span>
-                  ))}
+                <div className="flex items-center gap-1.5 text-2xs font-mono mt-1.5 flex-wrap">
+                  <span className="text-[#555] font-bold">Flatmates:</span>
+                  {currentHome.members?.map((m, idx) => {
+                    const memberName = (typeof m === 'object' && m !== null) ? (m.name || m.email || 'Roommate') : 'Roommate';
+                    const memberId = (typeof m === 'object' && m !== null) ? (m.id || m._id) : m;
+                    const isAdmin = memberId === currentHome.adminId || (typeof m === 'object' && m?.badges?.includes('Creator'));
+                    return (
+                      <span 
+                        key={memberId || idx}
+                        className={`px-2 py-0.5 border-2 border-[#121212] font-black uppercase text-2xs flex items-center gap-1 ${
+                          isAdmin 
+                            ? 'bg-[#10B981] text-white shadow-[1px_1px_0px_0px_#121212]' 
+                            : 'bg-white text-[#121212] shadow-[1px_1px_0px_0px_#121212]'
+                        }`}
+                        title={isAdmin ? 'Room Creator / Admin' : 'Joined Roommate'}
+                      >
+                        <span>{isAdmin ? '★' : '👤'}</span>
+                        <span className="truncate max-w-[120px]">{memberName}</span>
+                        {isAdmin && <span className="text-3xs font-mono opacity-90">(ADMIN)</span>}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto shrink-0">
+              {appState.handleSyncRoom && (
+                <button
+                  onClick={appState.handleSyncRoom}
+                  disabled={appState.isSyncingRoom}
+                  className="bg-white hover:bg-[#F0C020] text-[#121212] border-2 border-[#121212] px-2.5 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"
+                  title="Refresh room members from server"
+                >
+                  <RefreshCw className={`w-3 h-3 text-[#1040C0] ${appState.isSyncingRoom ? 'animate-spin' : ''}`} />
+                  <span>{appState.isSyncingRoom ? 'SYNCING...' : 'SYNC'}</span>
+                </button>
+              )}
               <button
                 onClick={() => setIsAddMemberModalOpen(true)}
                 className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-3 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"

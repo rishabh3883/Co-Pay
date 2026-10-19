@@ -378,20 +378,23 @@ export default function useAppController() {
         userHomes = [];
       }
 
-      // Merge with any locally created rooms so nothing gets lost
-      const localHomes = JSON.parse(localStorage.getItem('mockHomes') || '[]');
-      const combinedHomes = [...(Array.isArray(userHomes) ? userHomes : [])];
-      for (const lh of localHomes) {
-        if (!combinedHomes.some(h => h.id === lh.id || (h.name && h.name.toLowerCase() === lh.name.toLowerCase()))) {
-          combinedHomes.push(lh);
+      // Real user homes from backend is the single source of truth
+      const userHomesList = Array.isArray(userHomes) ? userHomes : [];
+      let finalHomes = userHomesList;
+
+      if (userHomesList.length === 0) {
+        // Only if server has no homes yet, check if any local room was saved
+        const localHomes = JSON.parse(localStorage.getItem('mockHomes') || '[]');
+        if (localHomes.length > 0) {
+          finalHomes = localHomes;
         }
       }
 
-      setHomes(combinedHomes);
+      setHomes(finalHomes);
 
-      if (combinedHomes.length > 0) {
+      if (finalHomes.length > 0) {
         const savedHomeId = localStorage.getItem('lastHomeId');
-        const defaultHome = combinedHomes.find(h => h.id === savedHomeId) || combinedHomes[0];
+        const defaultHome = finalHomes.find(h => h.id === savedHomeId) || finalHomes[0];
         setActiveHomeId(defaultHome.id);
         setActiveHome(defaultHome);
       }
@@ -456,10 +459,11 @@ export default function useAppController() {
     }
   }, [activeHomeId, isBackendConnected]);
 
-  // Real-time background sync interval (every 4 seconds) to detect joined flatmates
+  // Real-time background sync interval (every 3 seconds) to detect joined flatmates
   useEffect(() => {
-    if (!token || !activeHomeId || !isBackendConnected) return;
+    if (!token || !activeHomeId) return;
 
+    let pollCount = 0;
     const pollTimer = setInterval(async () => {
       try {
         const homeDetails = await apiFetch(`/homes/${activeHomeId}`);
@@ -467,7 +471,7 @@ export default function useAppController() {
           setActiveHome(prev => {
             if (prev && prev.id === homeDetails.id && Array.isArray(prev.members) && Array.isArray(homeDetails.members)) {
               if (homeDetails.members.length > prev.members.length) {
-                const newMembers = homeDetails.members.filter(m => !prev.members.some(pm => pm.id === m.id || pm.email === m.email));
+                const newMembers = homeDetails.members.filter(m => !prev.members.some(pm => (pm.id && pm.id === m.id) || (pm.email && pm.email === m.email)));
                 if (newMembers.length > 0) {
                   setNewRoommateAlert(`🎉 New roommate joined: ${newMembers.map(n => n.name || n.email).join(', ')} is now in this room!`);
                 }
@@ -486,13 +490,22 @@ export default function useAppController() {
             return [...prev, homeDetails];
           });
         }
+
+        // Every 3rd cycle (~9 seconds), also refresh all homes
+        pollCount++;
+        if (pollCount % 3 === 0) {
+          const freshHomes = await apiFetch('/homes');
+          if (Array.isArray(freshHomes) && freshHomes.length > 0) {
+            setHomes(freshHomes);
+          }
+        }
       } catch (_) {
         // Silent skip
       }
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(pollTimer);
-  }, [token, activeHomeId, isBackendConnected]);
+  }, [token, activeHomeId]);
 
   const handleSyncRoom = async () => {
     if (!activeHomeId) return;
@@ -790,50 +803,19 @@ export default function useAppController() {
       return;
     }
     try {
-      if (isBackendConnected) {
-        const newHome = await apiFetch('/homes', {
-          method: 'POST',
-          body: JSON.stringify({ name: trimmedName, monthlyBudget: Number(homeForm.monthlyBudget) || 0 })
-        });
-        const updated = [...homes, newHome];
-        setHomes(updated);
-        localStorage.setItem('mockHomes', JSON.stringify(updated));
-        setActiveHomeId(newHome.id);
-        setActiveHome(newHome);
-      } else {
-        const genCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const newHome = {
-          id: 'home-' + Math.random().toString(36).substring(2, 9),
-          name: trimmedName,
-          inviteCode: genCode,
-          joinCode: genCode,
-          adminId: user?.id || 'offline-user-1',
-          creatorEmail: user?.email || 'me@copay.io',
-          createdAt: new Date().toISOString(),
-          monthlyBudget: Number(homeForm.monthlyBudget) || 0,
-          members: [
-            { 
-              id: user?.id || 'offline-user-1', 
-              name: user?.name || 'Roommate', 
-              email: user?.email || 'me@copay.io', 
-              phone: user?.phone || '', 
-              whatsapp: user?.phone || '', 
-              upiId: user?.upiId || '', 
-              streaks: 1, 
-              badges: ['Creator'] 
-            }
-          ]
-        };
-        const updated = [...homes, newHome];
-        setHomes(updated);
-        localStorage.setItem('mockHomes', JSON.stringify(updated));
-        setActiveHomeId(newHome.id);
-        setActiveHome(newHome);
-      }
+      const newHome = await apiFetch('/homes', {
+        method: 'POST',
+        body: JSON.stringify({ name: trimmedName, monthlyBudget: Number(homeForm.monthlyBudget) || 0 })
+      });
+      const updated = [...homes.filter(h => h.id !== newHome.id), newHome];
+      setHomes(updated);
+      localStorage.setItem('mockHomes', JSON.stringify(updated));
+      setActiveHomeId(newHome.id);
+      setActiveHome(newHome);
+      localStorage.setItem('lastHomeId', newHome.id);
       setHomeForm({ name: '', monthlyBudget: '' });
       setIsRoomModalOpen(false);
       confetti({ particleCount: 100, spread: 60 });
-      // Automatically pop open the Add Members modal after creating room
       setIsAddMemberModalOpen(true);
     } catch (err) {
       alert('Error creating workspace: ' + (err.message || 'Please check your inputs'));
@@ -849,74 +831,36 @@ export default function useAppController() {
     }
 
     try {
-      if (isBackendConnected) {
-        const joinedHome = await apiFetch('/homes/join', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            inviteCode: cleanCode,
-            userId: user?.id,
-            userName: user?.name,
-            userEmail: user?.email,
-            phone: user?.phone,
-            upiId: user?.upiId
-          })
-        });
-        const existingIdx = homes.findIndex(h => h.id === joinedHome.id);
-        const updated = existingIdx >= 0 ? homes.map(h => h.id === joinedHome.id ? joinedHome : h) : [...homes, joinedHome];
-        setHomes(updated);
-        localStorage.setItem('mockHomes', JSON.stringify(updated));
-        setActiveHomeId(joinedHome.id);
-        setActiveHome(joinedHome);
-        // Refresh full workspace data so all members and ledger are synced
-        setTimeout(() => loadData(), 300);
-      } else {
-        // Offline / sandbox room join
-        const allKnown = JSON.parse(localStorage.getItem('mockHomes') || '[]');
-        const existing = allKnown.find(h => (h.inviteCode?.toUpperCase() === cleanCode || h.joinCode?.toUpperCase() === cleanCode));
-        const myMember = {
-          id: user?.id || 'offline-user-1',
-          name: user?.name || 'Roommate',
-          email: user?.email || 'me@copay.io',
-          phone: user?.phone || '',
-          whatsapp: user?.phone || '',
-          upiId: user?.upiId || '',
-          streaks: 1,
-          badges: ['Roommate']
-        };
+      const joinedHome = await apiFetch('/homes/join', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          inviteCode: cleanCode,
+          userId: user?.id,
+          userName: user?.name,
+          userEmail: user?.email,
+          phone: user?.phone,
+          upiId: user?.upiId
+        })
+      });
 
-        if (existing) {
-          if (!existing.members.some(m => m.id === myMember.id || m.email === myMember.email)) {
-            existing.members.push(myMember);
-          }
-          localStorage.setItem('mockHomes', JSON.stringify(allKnown));
-          setHomes(allKnown);
-          setActiveHomeId(existing.id);
-          setActiveHome(existing);
-        } else {
-          const newJoinedHome = {
-            id: 'home-' + Math.random().toString(36).substring(2, 9),
-            name: `Flat Room (${cleanCode})`,
-            inviteCode: cleanCode,
-            joinCode: cleanCode,
-            adminId: 'admin-flatmate',
-            monthlyBudget: 20000,
-            members: [
-              { id: 'admin-flatmate', name: 'Roommate (Admin)', email: 'admin@copay.io', streaks: 2, badges: ['Creator'] },
-              myMember
-            ]
-          };
-          const updated = [...homes, newJoinedHome];
-          setHomes(updated);
-          localStorage.setItem('mockHomes', JSON.stringify(updated));
-          setActiveHomeId(newJoinedHome.id);
-          setActiveHome(newJoinedHome);
-        }
+      if (!joinedHome || !joinedHome.id) {
+        throw new Error('Room not found. Please verify the invite code.');
       }
+
+      const existingIdx = homes.findIndex(h => h.id === joinedHome.id);
+      const updated = existingIdx >= 0 ? homes.map(h => h.id === joinedHome.id ? joinedHome : h) : [...homes, joinedHome];
+      setHomes(updated);
+      localStorage.setItem('mockHomes', JSON.stringify(updated));
+      setActiveHomeId(joinedHome.id);
+      setActiveHome(joinedHome);
+      localStorage.setItem('lastHomeId', joinedHome.id);
       setJoinCode('');
       setIsRoomModalOpen(false);
       confetti({ particleCount: 120, colors: ['#10B981', '#34D399'] });
+      // Refresh full workspace data so all members and ledger are synced
+      setTimeout(() => loadData(), 200);
     } catch (err) {
-      alert(err.message || 'Invalid invite code or already joined');
+      alert('Failed to join room: ' + (err.message || 'Invalid invite code. Ask your admin for the correct code.'));
     }
   };
 

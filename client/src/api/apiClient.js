@@ -25,21 +25,28 @@ export const buildApiFetcher = (token, setIsBackendConnected) => {
       } catch (netErr) {
         // Fallback from 127.0.0.1 to localhost if needed
         if (API_BASE.includes('127.0.0.1')) {
-          response = await fetch(`http://localhost:5000/api${endpoint}`, { ...options, headers });
+          try {
+            response = await fetch(`http://localhost:5000/api${endpoint}`, { ...options, headers });
+          } catch (localErr) {
+            if (setIsBackendConnected) setIsBackendConnected(false);
+            throw localErr;
+          }
         } else {
+          if (setIsBackendConnected) setIsBackendConnected(false);
           throw netErr;
         }
       }
 
+      // Any HTTP response means the backend is reachable and alive
+      if (setIsBackendConnected) setIsBackendConnected(true);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'API request failed');
+        throw new Error(errorData.message || `API error (${response.status})`);
       }
-      if (setIsBackendConnected) setIsBackendConnected(true);
       return await response.json();
     } catch (err) {
-      console.warn('API error (using fallback storage if disconnected):', err.message);
-      if (setIsBackendConnected) setIsBackendConnected(false);
+      console.warn('API error:', err.message);
       throw err;
     }
   };

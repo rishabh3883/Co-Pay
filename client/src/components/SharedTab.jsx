@@ -302,14 +302,14 @@ export default function SharedTab(props) {
                           const phoneClean = (m.phone || '').replace(/[^0-9+]/g, '');
 
                           return (
-                            <div key={m.id} className="flex items-center gap-2 text-xs bg-gray-950/50 p-2 rounded border border-gray-900">
+                            <div key={m.id || Math.random()} className="flex items-center gap-2 text-xs bg-gray-950/50 p-2 rounded border border-gray-900">
                               <div className="w-6 h-6 rounded-full bg-indigo-900 text-indigo-300 font-bold flex items-center justify-center text-4xs shrink-0">
-                                {m.name.charAt(0).toUpperCase()}
+                                {(m.name || m.email || 'R').charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-gray-200 truncate">{m.name}</span>
-                                  {activeHome.adminId === m.id && (
+                                  <span className="font-medium text-gray-200 truncate">{m.name || m.email || 'Roommate'}</span>
+                                  {(activeHome.adminId === m.id || m.badges?.includes('Creator')) && (
                                     <span className="text-4xs bg-purple-950 text-purple-300 px-1 py-0.2 rounded font-mono border border-purple-500/20">Admin</span>
                                   )}
                                 </div>
