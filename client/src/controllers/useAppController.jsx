@@ -486,14 +486,47 @@ export default function useAppController() {
     e.preventDefault();
     setAuthError(null);
 
-    let serverErrorMessage = null;
+    const email = authForm.email?.trim()?.toLowerCase();
+    const password = authForm.password;
+    const name = authForm.name?.trim();
 
-    // 1. Attempt API authentication (with IPv4 fallback)
+    // 1. Client-Side Input Validations
+    if (!email) {
+      setAuthError('Please enter your email address.');
+      return;
+    }
+
+    if (!password) {
+      setAuthError('Please enter your password.');
+      return;
+    }
+
+    if (isRegistering) {
+      if (!name) {
+        setAuthError('Please enter your full name to register.');
+        return;
+      }
+      if (password.length < 4) {
+        setAuthError('Password must be at least 4 characters long.');
+        return;
+      }
+    }
+
+    // Helper: read locally registered accounts
+    const getLocalUsers = () => {
+      try {
+        return JSON.parse(localStorage.getItem('copay_registered_users') || '[]');
+      } catch (_) {
+        return [];
+      }
+    };
+
+    // 2. Attempt Authentication via API (Supabase Cloud or Express API)
     try {
       const endpoint = isRegistering ? `${API_BASE}/auth/register` : `${API_BASE}/auth/login`;
       const payload = isRegistering 
-        ? authForm 
-        : { email: authForm.email, password: authForm.password };
+        ? { name, email, password } 
+        : { email, password };
 
       let res;
       try {
@@ -515,77 +548,121 @@ export default function useAppController() {
         }
       }
 
+      // Handle Successful API Response
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        if (data.token) {
+        if (data.token && data.user) {
           localStorage.setItem('token', data.token);
-          const userName = data.user?.name || authForm.name || (authForm.email ? authForm.email.split('@')[0] : 'Roommate');
-          const userEmail = data.user?.email || authForm.email || 'user@copay.io';
+          const userName = data.user.name || name || 'Roommate';
+          const userEmail = data.user.email || email;
+
           localStorage.setItem('copay_user_name', userName);
           localStorage.setItem('copay_user_email', userEmail);
           localStorage.setItem('mockName', userName);
           localStorage.setItem('mockEmail', userEmail);
+
+          // Save/Sync to local registered users store
+          const localUsers = getLocalUsers();
+          const existingIdx = localUsers.findIndex(u => u.email === userEmail);
+          if (existingIdx >= 0) {
+            localUsers[existingIdx] = { ...localUsers[existingIdx], name: userName, password };
+          } else {
+            localUsers.push({ id: data.user.id, name: userName, email: userEmail, password });
+          }
+          localStorage.setItem('copay_registered_users', JSON.stringify(localUsers));
+
           setIsBackendConnected(true);
           setToken(data.token);
           setUser({
-            id: data.user?.id || 'usr_me',
+            id: data.user.id || 'usr_me',
             name: userName,
             email: userEmail,
-            personalBudget: 15000,
-            phone: localStorage.getItem('mockPhone') || '',
-            upiId: localStorage.getItem('mockUpiId') || '',
-            streaks: 2,
-            badges: ['Active Roommate']
+            personalBudget: Number(data.user.personalBudget) || 15000,
+            phone: data.user.phone || localStorage.getItem('mockPhone') || '',
+            upiId: data.user.upiId || localStorage.getItem('mockUpiId') || '',
+            streaks: data.user.streaks || 2,
+            badges: data.user.badges || ['Active Roommate']
           });
           confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
           return;
         }
-      } else if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 409 || res.status === 422) {
-        // True validation error from live backend
-        const data = await res.json().catch(() => ({}));
-        if (data && data.message) {
-          serverErrorMessage = data.message;
-        }
       } else {
-        // 405 (Method Not Allowed), 404, 502 etc.: Host has no backend handler, switch to local session
-        console.warn(`Auth endpoint returned status ${res.status}. Falling back smoothly to workspace session.`);
+        // API responded with an error (e.g. 400 User Exists / 401 User Not Found / 401 Wrong Password)
+        const data = await res.json().catch(() => ({}));
+        const errorMsg = data?.message || (isRegistering 
+          ? 'Registration failed. User with this email might already exist.' 
+          : 'Account not found! Please register first before logging in.');
+        setAuthError(errorMsg);
+        return; // ABSOLUTELY STOP! Do not log in!
       }
     } catch (networkErr) {
-      console.warn('Backend server not reachable, switching to offline authentication:', networkErr.message);
-    }
+      console.warn('API endpoint not reachable, checking local registry:', networkErr.message);
 
-    // 2. If the server responded with an explicit validation error (e.g. user already exists / wrong password), show it
-    if (serverErrorMessage) {
-      setAuthError(serverErrorMessage);
-      return;
-    }
+      // 3. True Offline Mode Verification (Strict Validation)
+      const localUsers = getLocalUsers();
+      const existingUser = localUsers.find(u => u.email === email);
 
-    // 3. If server is offline / unreachable (Vercel cloud, offline development):
-    // Smoothly log into Offline Workspace without throwing network errors
-    try {
-      const derivedName = authForm.name || (authForm.email ? authForm.email.split('@')[0] : 'Roommate');
-      const safeEmail = authForm.email || 'user@copay.io';
-      localStorage.setItem('token', 'offline-token-key');
-      localStorage.setItem('copay_user_name', derivedName);
-      localStorage.setItem('copay_user_email', safeEmail);
-      localStorage.setItem('mockName', derivedName);
-      localStorage.setItem('mockEmail', safeEmail);
-      setIsBackendConnected(false);
-      setAuthError(null);
-      setToken('offline-token-key');
-      setUser({
-        id: 'offline-user-1',
-        name: derivedName,
-        email: safeEmail,
-        personalBudget: Number(localStorage.getItem('mockPersonalBudget') || '10000'),
-        phone: localStorage.getItem('mockPhone') || '',
-        upiId: localStorage.getItem('mockUpiId') || '',
-        streaks: 1,
-        badges: ['Roommate']
-      });
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    } catch (localErr) {
-      setAuthError('Authentication error: ' + localErr.message);
+      if (isRegistering) {
+        // Registering offline: check if already exists
+        if (existingUser) {
+          setAuthError('An account with this email already exists! Please click "Sign In" below.');
+          return;
+        }
+
+        // Create new user in local registry
+        const newLocalUser = {
+          id: 'usr_' + Math.random().toString(36).substring(2, 9),
+          name: name,
+          email: email,
+          password: password,
+          personalBudget: 15000,
+          phone: '',
+          upiId: '',
+          streaks: 1,
+          badges: ['Roommate']
+        };
+
+        localUsers.push(newLocalUser);
+        localStorage.setItem('copay_registered_users', JSON.stringify(localUsers));
+        localStorage.setItem('token', 'local-token-' + newLocalUser.id);
+        localStorage.setItem('copay_user_name', newLocalUser.name);
+        localStorage.setItem('copay_user_email', newLocalUser.email);
+        localStorage.setItem('mockName', newLocalUser.name);
+        localStorage.setItem('mockEmail', newLocalUser.email);
+
+        setIsBackendConnected(false);
+        setAuthError(null);
+        setToken('local-token-' + newLocalUser.id);
+        setUser(newLocalUser);
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        return;
+      } else {
+        // Logging in offline: MUST ALREADY BE REGISTERED!
+        if (!existingUser) {
+          setAuthError('Account not found! This email is not registered yet. Please click "Register Here" below to create an account first.');
+          return; // STOP! NEVER log in without registration!
+        }
+
+        // Verify password
+        if (existingUser.password && existingUser.password !== password) {
+          setAuthError('Incorrect password! Please check your credentials.');
+          return; // STOP! Wrong password!
+        }
+
+        // Login with existing user
+        localStorage.setItem('token', 'local-token-' + existingUser.id);
+        localStorage.setItem('copay_user_name', existingUser.name);
+        localStorage.setItem('copay_user_email', existingUser.email);
+        localStorage.setItem('mockName', existingUser.name);
+        localStorage.setItem('mockEmail', existingUser.email);
+
+        setIsBackendConnected(false);
+        setAuthError(null);
+        setToken('local-token-' + existingUser.id);
+        setUser(existingUser);
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        return;
+      }
     }
   };
 
