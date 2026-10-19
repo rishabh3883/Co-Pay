@@ -39,7 +39,9 @@ import {
   Mic,
   Camera,
   Volume2,
-  PhoneCall
+  PhoneCall,
+  RefreshCw,
+  Bell
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -633,6 +635,19 @@ export default function AppView() {
             </span>
             <span className="text-[9px]">▼</span>
           </button>
+
+          {/* Real-time Sync Room Button */}
+          {appState.handleSyncRoom && (
+            <button
+              onClick={appState.handleSyncRoom}
+              disabled={appState.isSyncingRoom}
+              className="flex items-center gap-1 px-2 py-1.5 bg-white hover:bg-[#F0C020] text-[#121212] border-3 border-[#121212] text-2xs font-mono font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+              title="Instant sync: check for new roommates and latest expenses"
+            >
+              <RefreshCw className={`w-3 h-3 text-[#1040C0] ${appState.isSyncingRoom ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{appState.isSyncingRoom ? 'SYNCING...' : 'SYNC'}</span>
+            </button>
+          )}
         </div>
 
         {/* Primary 3-tab Bauhaus Bar */}
@@ -709,6 +724,78 @@ export default function AppView() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        {/* Real-Time New Roommate Joined Live Alert */}
+        {appState.newRoommateAlert && (
+          <div className="bg-[#10B981] text-white border-4 border-[#121212] p-4 shadow-[6px_6px_0px_0px_#121212] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white text-[#121212] flex items-center justify-center font-black border-2 border-[#121212] shrink-0">
+                <Bell className="w-4 h-4 text-[#10B981]" />
+              </div>
+              <div>
+                <span className="text-3xs font-mono font-black uppercase tracking-widest text-[#121212] bg-[#F0C020] px-1.5 py-0.5 border border-[#121212] inline-block mb-1">
+                  LIVE WORKSPACE UPDATE
+                </span>
+                <p className="text-xs sm:text-sm font-black uppercase text-white tracking-wide">
+                  {appState.newRoommateAlert}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => appState.setNewRoommateAlert(null)}
+              className="bg-white text-[#121212] hover:bg-[#D02020] hover:text-white border-2 border-[#121212] px-3 py-1 text-2xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0"
+            >
+              DISMISS ✕
+            </button>
+          </div>
+        )}
+
+        {/* Workspace Quick Roster Banner - Shows who created the room & all roommates */}
+        {currentHome && (
+          <div className="bg-white border-4 border-[#121212] p-3 sm:p-4 shadow-[5px_5px_0px_0px_#121212] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-[#1040C0] text-white flex items-center justify-center border-2 border-[#121212] shadow-[2px_2px_0px_0px_#121212]">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm font-black uppercase text-[#121212]">
+                    ROOM: {currentHome.name}
+                  </span>
+                  <span className="bg-[#F0C020] text-[#121212] text-3xs font-mono font-black px-2 py-0.5 border border-[#121212]">
+                    CODE: {currentHome.inviteCode || currentHome.joinCode || currentHome.id}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-2xs font-mono text-[#555] mt-0.5 flex-wrap">
+                  <span>Roommates ({currentHome.members?.length || 1}):</span>
+                  {currentHome.members?.map((m, idx) => (
+                    <span 
+                      key={m.id || idx}
+                      className={`px-1.5 py-0.2 border border-[#121212] font-black uppercase text-3xs ${
+                        m.id === currentHome.adminId 
+                          ? 'bg-[#10B981] text-white' 
+                          : 'bg-[#F0F0F0] text-[#121212]'
+                      }`}
+                      title={m.id === currentHome.adminId ? 'Room Creator / Admin' : 'Joined Roommate'}
+                    >
+                      {m.name || 'Roommate'} {m.id === currentHome.adminId ? '★ (ADMIN)' : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={() => setIsAddMemberModalOpen(true)}
+                className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-3 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"
+              >
+                <Users className="w-3 h-3" />
+                <span>+ ADD / INVITE</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* AI Receipt Scanner & 3-Way Splitter Modal */}
         <ReceiptScannerModal

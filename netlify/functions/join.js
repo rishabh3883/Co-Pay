@@ -1,5 +1,5 @@
 const SUPABASE_REST = process.env.SUPABASE_REST_URL || 'https://vganmmygqhvkrvsxpcks.supabase.co/rest/v1';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnYW5tbXlncWh2a3J2c3hwY2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDQ4OTMsImV4cCI6MjEwNzk4MDg5M30.8eyKKRZb5RixIcCz-aIoajVyNAByMJn1Cv8aHyDKLyU';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnYW5tbXlncWh2a3J2c3hwY2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDQ4OTMsImV4cCI6MjEwNzk4MDg5M30.8eyKKRZb5RixIcCz-aIoajVyNAByMJn1Cv8aHyDKLyU';
 
 const headers = {
   'apikey': SUPABASE_KEY,
@@ -14,6 +14,43 @@ const responseHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 };
+
+async function populateHomeMembers(home, allUsers) {
+  const memberIds = Array.isArray(home.members) ? [...home.members] : [];
+  if (home.adminId && !memberIds.includes(home.adminId)) {
+    memberIds.unshift(home.adminId);
+  }
+
+  const populated = memberIds.map(mId => {
+    if (typeof mId === 'object' && mId !== null && mId.name) return mId;
+
+    const found = allUsers.find(u => u.id === mId || u.email === mId);
+    if (found) {
+      return {
+        id: found.id,
+        name: found.name,
+        email: found.email,
+        phone: found.phone || '',
+        whatsapp: found.phone || '',
+        upiId: found.upiId || '',
+        streaks: found.streaks || 1,
+        badges: found.id === home.adminId ? ['Creator'] : (found.badges || ['Roommate'])
+      };
+    }
+    return {
+      id: mId,
+      name: mId === home.adminId ? 'Roommate (Admin)' : 'Roommate',
+      email: '',
+      phone: '',
+      whatsapp: '',
+      upiId: '',
+      streaks: 1,
+      badges: mId === home.adminId ? ['Creator'] : ['Roommate']
+    };
+  });
+
+  return { ...home, members: populated };
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -30,6 +67,19 @@ exports.handler = async (event) => {
 
   try {
     const { inviteCode, userId } = JSON.parse(event.body || '{}');
+
+    // Extract user from token if userId not provided in body
+    let effectiveUserId = userId;
+    const authHeader = event.headers.authorization || event.headers.Authorization || '';
+    if (!effectiveUserId && authHeader.startsWith('Bearer ')) {
+      const rawToken = authHeader.substring(7);
+      if (rawToken.startsWith('jwt_')) {
+        try {
+          const decoded = JSON.parse(Buffer.from(rawToken.substring(4), 'base64').toString('utf8'));
+          effectiveUserId = decoded.userId || decoded.id;
+        } catch (_) {}
+      }
+    }
 
     if (!inviteCode) {
       return {
@@ -58,18 +108,18 @@ exports.handler = async (event) => {
     const home = homes[0];
 
     // 2. Add user to members list if not already present
-    if (userId) {
+    if (effectiveUserId) {
       const currentMembers = Array.isArray(home.members) ? home.members : [];
       const alreadyMember = currentMembers.some(m => {
         if (!m) return false;
-        if (typeof m === 'string') return m === userId;
-        return m._id === userId || m.id === userId;
+        if (typeof m === 'string') return m === effectiveUserId;
+        return m._id === effectiveUserId || m.id === effectiveUserId;
       });
 
       if (!alreadyMember) {
         const updatedMemberIds = [
           ...currentMembers.map(m => (typeof m === 'object' && m !== null) ? (m._id || m.id) : m),
-          userId
+          effectiveUserId
         ];
 
         await fetch(`${SUPABASE_REST}/homes?id=eq.${home.id}`, {
@@ -81,36 +131,17 @@ exports.handler = async (event) => {
       }
     }
 
-    // 3. Populate full member profiles
-    if (Array.isArray(home.members) && home.members.length > 0) {
-      const memberIds = home.members.map(m => (typeof m === 'object' && m !== null) ? (m._id || m.id) : m).filter(Boolean);
-      if (memberIds.length > 0) {
-        try {
-          const userQuery = memberIds.map(id => `id.eq.${id}`).join(',');
-          const usersRes = await fetch(`${SUPABASE_REST}/users?or=(${userQuery})&select=id,name,email,avatar,phone,upiId`, {
-            headers
-          });
-          const memberUsers = await usersRes.json();
-          if (Array.isArray(memberUsers)) {
-            home.members = memberUsers.map(u => ({
-              _id: u.id,
-              name: u.name,
-              email: u.email,
-              avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name || 'User')}`,
-              phone: u.phone,
-              upiId: u.upiId
-            }));
-          }
-        } catch (popErr) {
-          console.warn('Could not populate members in Netlify join function:', popErr);
-        }
-      }
-    }
+    // 3. Populate all members
+    const usersRes = await fetch(`${SUPABASE_REST}/users?select=*`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    const allUsers = usersRes.ok ? await usersRes.json() : [];
+    const populated = await populateHomeMembers(home, allUsers);
 
     return {
       statusCode: 200,
       headers: responseHeaders,
-      body: JSON.stringify(home)
+      body: JSON.stringify(populated)
     };
   } catch (err) {
     return {
