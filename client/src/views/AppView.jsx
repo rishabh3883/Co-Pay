@@ -10,11 +10,13 @@ import BauhausLanding from '../components/BauhausLanding';
 import ReceiptScannerModal from '../components/ReceiptScannerModal';
 import AddMemberModal from '../components/AddMemberModal';
 import ProfileSettings from '../components/ProfileSettings';
+import RoomSwitcherModal from '../components/RoomSwitcherModal';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   DollarSign, 
   Home as HomeIcon, 
   Users, 
+  DoorOpen,
   TrendingUp, 
   Plus, 
   Check, 
@@ -81,6 +83,7 @@ export default function AppView() {
     voiceError, setVoiceError,
     isReceiptScannerOpen, setIsReceiptScannerOpen,
     isAddMemberModalOpen, setIsAddMemberModalOpen,
+    isRoomModalOpen, setIsRoomModalOpen,
     handleReceiptExpenseAdded,
     selectedSettlementPayee, setSelectedSettlementPayee,
     settlementRefId, setSettlementRefId,
@@ -88,6 +91,21 @@ export default function AppView() {
     categoryColors, calculationsData,
     handleLogout, handleAuthSubmit,
   } = appState;
+
+  // Helper: check if current user created a room
+  const isRoomCreatedByUser = (h) => {
+    if (!h) return false;
+    const myId = user?.id;
+    const myEmail = user?.email?.toLowerCase();
+    if (h.adminId === myId || (myEmail && h.creatorEmail?.toLowerCase() === myEmail)) return true;
+    if (h.members && h.members.length > 0) {
+      const first = h.members[0];
+      if (first.id === myId || (myEmail && first.email?.toLowerCase() === myEmail)) {
+        if (first.badges?.includes('Creator') || first.badges?.includes('Admin')) return true;
+      }
+    }
+    return false;
+  };
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -298,6 +316,61 @@ export default function AppView() {
             </button>
           </div>
 
+          {/* If previous rooms exist, show them clearly with 1-click select */}
+          {homes.length > 0 && (
+            <div className="p-6 sm:p-8 bg-[#F0F0F0] border-b-4 border-[#121212] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-[#121212] pb-2">
+                <div>
+                  <h3 className="text-sm sm:text-base font-black uppercase text-[#121212] tracking-tight flex items-center gap-2">
+                    <DoorOpen className="w-5 h-5 text-[#1040C0]" />
+                    AAPKE BANE AUR JOIN KIYE HUYE ROOMS ({homes.length})
+                  </h3>
+                  <p className="text-2xs font-mono text-[#555]">
+                    Click any room below to enter your workspace immediately.
+                  </p>
+                </div>
+                <span className="bg-[#F0C020] text-[#121212] border-2 border-[#121212] text-3xs font-mono font-black px-2 py-0.5 uppercase self-start sm:self-auto">
+                  PREVIOUS WORKSPACES
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {homes.map((h) => {
+                  const isCreated = isRoomCreatedByUser(h);
+                  const code = h.inviteCode || h.joinCode || h.id;
+                  return (
+                    <div
+                      key={h.id}
+                      className="bg-white border-3 border-[#121212] p-4 flex flex-col justify-between space-y-3 shadow-[4px_4px_0px_0px_#121212]"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-3xs font-mono font-black px-2 py-0.5 uppercase border border-[#121212] text-white ${isCreated ? 'bg-[#10B981]' : 'bg-[#1040C0]'}`}>
+                            {isCreated ? '★ CREATED BY YOU' : '✓ JOINED ROOM'}
+                          </span>
+                          <span className="text-3xs font-mono font-bold text-[#555]">
+                            👥 {h.members?.length || 1} Roommates
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-black uppercase text-[#121212] truncate mt-1">{h.name}</h4>
+                        <p className="text-2xs font-mono text-[#666]">
+                          Invite Code: <strong className="text-[#121212] bg-[#F0F0F0] px-1 border border-[#121212] select-all">{code}</strong>
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveHomeId(h.id)}
+                        className="w-full bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] py-2.5 text-xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>ENTER THIS ROOM &rarr;</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Two Distinct Options Grid */}
           <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#F8F8F8]">
             
@@ -439,6 +512,39 @@ export default function AppView() {
           </button>
         </div>
 
+        {/* Sidebar Room Workspaces Roster */}
+        <div className="p-3 border-b-4 border-[#121212] bg-[#F0F0F0] space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-3xs font-mono font-black uppercase tracking-wider text-[#555]">
+              ROOM WORKSPACES ({homes?.length || 0})
+            </span>
+            <button
+              onClick={() => { setIsRoomModalOpen(true); setSidebarOpen(false); }}
+              className="text-3xs font-mono font-black text-[#1040C0] hover:underline uppercase cursor-pointer"
+            >
+              + New / Switch
+            </button>
+          </div>
+
+          <div className="bg-white border-2 border-[#121212] p-2 shadow-[2px_2px_0px_0px_#121212] flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] inline-block animate-pulse shrink-0" />
+                <p className="text-xs font-black uppercase truncate text-[#121212]">{activeHome?.name || 'Room'}</p>
+              </div>
+              <p className="text-[10px] font-mono text-[#555] truncate mt-0.5">
+                Code: {activeHome?.inviteCode || activeHome?.joinCode || activeHome?.id}
+              </p>
+            </div>
+            <button
+              onClick={() => { setIsRoomModalOpen(true); setSidebarOpen(false); }}
+              className="bg-[#F0C020] text-[#121212] border border-[#121212] px-2 py-1 text-3xs font-black uppercase cursor-pointer hover:bg-[#D02020] hover:text-white transition-colors"
+            >
+              Switch
+            </button>
+          </div>
+        </div>
+
         {/* Sidebar nav items */}
         <nav className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto bg-[#F8F8F8]">
           {sidebarItems.map(({ key, label, emoji }) => (
@@ -513,6 +619,20 @@ export default function AppView() {
               CO-PAY<span className="text-[#1040C0]">.</span>
             </span>
           </div>
+
+          {/* Active Room Switcher Badge / Button */}
+          <button
+            onClick={() => setIsRoomModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F0F0F0] hover:bg-[#F0C020] text-[#121212] border-3 border-[#121212] text-xs font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all ml-1"
+            title="Switch or Create Flat Room"
+          >
+            <HomeIcon className="w-3.5 h-3.5 text-[#1040C0]" />
+            <span className="truncate max-w-[90px] sm:max-w-[150px]">{activeHome?.name || 'Select Room'}</span>
+            <span className="bg-[#1040C0] text-white text-[9px] px-1 font-mono font-black border border-[#121212]">
+              {homes?.length || 1} {homes?.length === 1 ? 'ROOM' : 'ROOMS'}
+            </span>
+            <span className="text-[9px]">▼</span>
+          </button>
         </div>
 
         {/* Primary 3-tab Bauhaus Bar */}
@@ -617,6 +737,22 @@ export default function AppView() {
           user={user}
           onAddMember={handleAddRoommate}
           onRemoveMember={handleRemoveRoommate}
+        />
+
+        {/* Room Switcher / Multi-Room Manager Modal */}
+        <RoomSwitcherModal
+          isOpen={isRoomModalOpen}
+          onClose={() => setIsRoomModalOpen(false)}
+          homes={homes}
+          activeHomeId={activeHomeId}
+          setActiveHomeId={setActiveHomeId}
+          user={user}
+          homeForm={homeForm}
+          setHomeForm={setHomeForm}
+          handleCreateHome={handleCreateHome}
+          joinCode={joinCode}
+          setJoinCode={setJoinCode}
+          handleJoinHome={handleJoinHome}
         />
 
         {/* AI Voice Expense Entry Preview Draft Modal */}

@@ -19,7 +19,12 @@ import confetti from 'canvas-confetti';
 export default function ProfileSettings({
   user,
   setUser,
+  homes,
   activeHome,
+  activeHomeId,
+  setActiveHomeId,
+  isRoomModalOpen,
+  setIsRoomModalOpen,
   profilePhone,
   setProfilePhone,
   profileUpi,
@@ -348,24 +353,74 @@ export default function ProfileSettings({
             </div>
           </div>
 
-          {/* Active Room Connection */}
-          {activeHome && (
-            <div className="bg-[#F8F8F8] border-4 border-[#121212] p-4 shadow-[6px_6px_0px_0px_#121212]">
-              <div className="flex items-center gap-2 mb-2">
+          {/* Rooms and Flats Workspaces */}
+          <div className="bg-[#F8F8F8] border-4 border-[#121212] p-4 shadow-[6px_6px_0px_0px_#121212] space-y-3">
+            <div className="flex items-center justify-between border-b-2 border-[#121212] pb-2">
+              <div className="flex items-center gap-2">
                 <HomeIcon className="w-4 h-4 text-[#1040C0]" />
                 <span className="text-2xs font-black uppercase tracking-wider text-[#121212]">
-                  ACTIVE ROOM WORKSPACE
+                  YOUR ROOMS ({homes?.length || 0})
                 </span>
               </div>
-              <p className="text-xs font-black uppercase text-[#121212]">
-                {activeHome.name}
-              </p>
-              <div className="flex items-center justify-between text-2xs font-mono text-[#555] mt-1 pt-2 border-t-2 border-[#121212]">
-                <span>INVITE CODE: <strong className="text-[#121212] font-black">{activeHome.joinCode || activeHome.id}</strong></span>
-                <span>{activeHome.members?.length || 1} ROOMMATES</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsRoomModalOpen && setIsRoomModalOpen(true)}
+                className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-2.5 py-1 text-3xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+              >
+                + New / Switch
+              </button>
             </div>
-          )}
+
+            {(!homes || homes.length === 0) ? (
+              <p className="text-2xs text-[#777] font-mono italic">No rooms joined yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {homes.map((h) => {
+                  const isActive = h.id === activeHomeId;
+                  const isCreated = (h.adminId === user?.id || (user?.email && h.creatorEmail?.toLowerCase() === user?.email.toLowerCase()) || (h.members?.[0]?.id === user?.id && h.members?.[0]?.badges?.includes('Creator')));
+                  const code = h.inviteCode || h.joinCode || h.id;
+
+                  return (
+                    <div
+                      key={h.id}
+                      className={`border-2 border-[#121212] p-2.5 transition-all ${
+                        isActive ? 'bg-[#F0C020] shadow-[3px_3px_0px_0px_#121212]' : 'bg-white shadow-[2px_2px_0px_0px_#121212]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[9px] font-mono font-black px-1.5 py-0.2 uppercase border border-[#121212] text-white ${
+                              isCreated ? 'bg-[#10B981]' : 'bg-[#1040C0]'
+                            }`}>
+                              {isCreated ? 'CREATED' : 'JOINED'}
+                            </span>
+                            {isActive && (
+                              <span className="text-[9px] font-mono font-black text-[#121212] uppercase bg-white border border-[#121212] px-1">
+                                ● ACTIVE
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-black uppercase text-[#121212] truncate mt-1">{h.name}</p>
+                          <p className="text-[10px] font-mono text-[#555] truncate">Code: {code}</p>
+                        </div>
+
+                        {!isActive && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveHomeId && setActiveHomeId(h.id)}
+                            className="bg-[#1040C0] hover:bg-[#0c3196] text-white border border-[#121212] px-2.5 py-1 text-3xs font-black uppercase cursor-pointer shrink-0 shadow-[1px_1px_0px_0px_#121212]"
+                          >
+                            Switch
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
         </div>
 
