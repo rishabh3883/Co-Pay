@@ -9,6 +9,7 @@ import ReceiptScannerModal from '../components/ReceiptScannerModal';
 import AddMemberModal from '../components/AddMemberModal';
 import ProfileSettings from '../components/ProfileSettings';
 import RoomSwitcherModal from '../components/RoomSwitcherModal';
+import RoommatesRosterModal from '../components/RoommatesRosterModal';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   DollarSign, 
@@ -112,6 +113,10 @@ export default function AppView() {
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  // Dedicated Roommates Roster Modal (Kon Kon Join Hai)
+  const [isRosterModalOpen, setIsRosterModalOpen] = React.useState(false);
+  const [selectedRosterHome, setSelectedRosterHome] = React.useState(null);
 
   // Sidebar nav items
   const sidebarItems = [
@@ -360,12 +365,28 @@ export default function AppView() {
                         </p>
                       </div>
 
-                      <button
-                        onClick={() => setActiveHomeId(h.id)}
-                        className="w-full bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] py-2.5 text-xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <span>ENTER THIS ROOM &rarr;</span>
-                      </button>
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRosterHome(h);
+                            setIsRosterModalOpen(true);
+                          }}
+                          className="bg-[#F0F0F0] hover:bg-[#F0C020] text-[#121212] border-2 border-[#121212] py-2 text-3xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1"
+                          title="See who created and who joined this room"
+                        >
+                          <Users className="w-3 h-3 text-[#1040C0]" />
+                          <span>MEMBERS ({h.members?.length || 1})</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveHomeId(h.id)}
+                          className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] py-2 text-3xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1"
+                        >
+                          <span>ENTER &rarr;</span>
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -545,6 +566,20 @@ export default function AppView() {
               Switch
             </button>
           </div>
+
+          {currentHome && (
+            <button
+              onClick={() => {
+                setSelectedRosterHome(currentHome);
+                setIsRosterModalOpen(true);
+                setSidebarOpen(false);
+              }}
+              className="w-full bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] py-2 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
+            >
+              <Users className="w-3.5 h-3.5 text-[#F0C020]" />
+              <span>👥 KON KON JOIN HAI ({currentHome.members?.length || 1})</span>
+            </button>
+          )}
         </div>
 
         {/* Sidebar nav items */}
@@ -646,6 +681,24 @@ export default function AppView() {
             >
               <RefreshCw className={`w-3 h-3 text-[#1040C0] ${appState.isSyncingRoom ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">{appState.isSyncingRoom ? 'SYNCING...' : 'SYNC'}</span>
+            </button>
+          )}
+
+          {/* View Roommates / Kon Kon Join Hai Header Button */}
+          {currentHome && (
+            <button
+              onClick={() => {
+                setSelectedRosterHome(currentHome);
+                setIsRosterModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F0C020] hover:bg-[#D02020] hover:text-white text-[#121212] border-3 border-[#121212] text-2xs font-mono font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+              title="See who created this room and who has joined"
+            >
+              <Users className="w-3.5 h-3.5 text-[#1040C0]" />
+              <span className="hidden md:inline">KON KON JOIN HAI</span>
+              <span className="bg-[#121212] text-white text-[9px] px-1 font-mono font-black border border-white">
+                {currentHome.members?.length || 1}
+              </span>
             </button>
           )}
         </div>
@@ -795,9 +848,23 @@ export default function AppView() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex items-center gap-2 ml-auto shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRosterHome(currentHome);
+                  setIsRosterModalOpen(true);
+                }}
+                className="bg-[#F0C020] hover:bg-[#D02020] hover:text-white text-[#121212] border-2 border-[#121212] px-3 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1.5"
+                title="Detailed list of who created the room and who joined"
+              >
+                <Users className="w-3.5 h-3.5 text-[#1040C0]" />
+                <span>👥 KON KON JOIN HAI ({currentHome.members?.length || 1})</span>
+              </button>
+
               {appState.handleSyncRoom && (
                 <button
+                  type="button"
                   onClick={appState.handleSyncRoom}
                   disabled={appState.isSyncingRoom}
                   className="bg-white hover:bg-[#F0C020] text-[#121212] border-2 border-[#121212] px-2.5 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"
@@ -808,6 +875,7 @@ export default function AppView() {
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setIsAddMemberModalOpen(true)}
                 className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-3 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"
               >
@@ -851,6 +919,24 @@ export default function AppView() {
           joinCode={joinCode}
           setJoinCode={setJoinCode}
           handleJoinHome={handleJoinHome}
+          onViewRoommates={(h) => {
+            setSelectedRosterHome(h);
+            setIsRosterModalOpen(true);
+          }}
+        />
+
+        {/* Dedicated Roommates Roster Modal (Kon Kon Join Hai) */}
+        <RoommatesRosterModal
+          isOpen={isRosterModalOpen}
+          onClose={() => {
+            setIsRosterModalOpen(false);
+            setSelectedRosterHome(null);
+          }}
+          activeHome={selectedRosterHome || currentHome}
+          user={user}
+          onSync={appState.handleSyncRoom}
+          isSyncing={appState.isSyncingRoom}
+          onOpenAddMember={() => setIsAddMemberModalOpen(true)}
         />
 
         {/* AI Voice Expense Entry Preview Draft Modal */}

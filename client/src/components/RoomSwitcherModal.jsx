@@ -25,7 +25,8 @@ export default function RoomSwitcherModal({
   handleCreateHome,
   joinCode,
   setJoinCode,
-  handleJoinHome
+  handleJoinHome,
+  onViewRoommates
 }) {
   const [tab, setTab] = useState('list'); // 'list' | 'create' | 'join'
   const [copiedCode, setCopiedCode] = useState(null);
@@ -272,7 +273,21 @@ export default function RoomSwitcherModal({
                             </div>
                           </div>
 
-                          <div className="shrink-0 flex sm:flex-col justify-end">
+                          <div className="shrink-0 flex sm:flex-col justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onViewRoommates) {
+                                  onViewRoommates(h);
+                                }
+                              }}
+                              className="bg-[#F0C020] hover:bg-[#D02020] hover:text-white text-[#121212] border-2 border-[#121212] px-3 py-1.5 text-3xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1"
+                              title="See who created and who joined this room"
+                            >
+                              <Users className="w-3 h-3 text-[#1040C0]" />
+                              <span>MEMBERS ({h.members?.length || 1})</span>
+                            </button>
+
                             {isActive ? (
                               <div className="bg-white text-[#121212] border-2 border-[#121212] px-3 py-1.5 text-xs font-black uppercase text-center shadow-[2px_2px_0px_0px_#121212]">
                                 CURRENT
@@ -283,9 +298,9 @@ export default function RoomSwitcherModal({
                                   setActiveHomeId(h.id);
                                   onClose();
                                 }}
-                                className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-4 py-2 text-xs font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1.5"
+                                className="bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-4 py-2 text-xs font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
                               >
-                                <span>SWITCH ROOM</span>
+                                <span>SWITCH</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                               </button>
                             )}
