@@ -366,12 +366,27 @@ export default function useAppController() {
       setProfilePhone(fullUser.phone || '');
       setProfileUpi(fullUser.upiId || '');
 
-      const userHomes = await apiFetch('/homes');
-      setHomes(userHomes);
+      let userHomes = [];
+      try {
+        userHomes = await apiFetch('/homes');
+      } catch (_) {
+        userHomes = [];
+      }
 
-      if (userHomes.length > 0) {
+      // Merge with any locally created rooms so nothing gets lost
+      const localHomes = JSON.parse(localStorage.getItem('mockHomes') || '[]');
+      const combinedHomes = [...(Array.isArray(userHomes) ? userHomes : [])];
+      for (const lh of localHomes) {
+        if (!combinedHomes.some(h => h.id === lh.id || (h.name && h.name.toLowerCase() === lh.name.toLowerCase()))) {
+          combinedHomes.push(lh);
+        }
+      }
+
+      setHomes(combinedHomes);
+
+      if (combinedHomes.length > 0) {
         const savedHomeId = localStorage.getItem('lastHomeId');
-        const defaultHome = userHomes.find(h => h.id === savedHomeId) || userHomes[0];
+        const defaultHome = combinedHomes.find(h => h.id === savedHomeId) || combinedHomes[0];
         setActiveHomeId(defaultHome.id);
       }
     } catch (err) {

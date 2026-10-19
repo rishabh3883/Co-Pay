@@ -181,13 +181,19 @@ const dbStore = {
     if (dbModule.isSupabaseConnected) {
       const { data, error } = await dbModule.supabase
         .from('homes')
-        .select('*')
-        .contains('members', [userId]);
+        .select('*');
       if (error) throw error;
-      return data || [];
+      if (!data || data.length === 0) return [];
+      return data.filter(h => 
+        h.adminId === userId || 
+        (Array.isArray(h.members) && h.members.includes(userId))
+      );
     }
     const list = dbModule.jsonDb.read('homes');
-    return list.filter(h => h.members.includes(userId));
+    return list.filter(h => 
+      (h.members && h.members.includes(userId)) || 
+      h.adminId === userId
+    );
   },
 
   // --- EXPENSES ---
