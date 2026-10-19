@@ -33,8 +33,8 @@ app.get('/health', (req, res) => {
 
 async function startServer() {
   await connectDB();
-  app.listen(PORT, () => {
-    console.log(`🚀 Co-Pay backend server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Co-Pay backend server running on http://localhost:${PORT} and http://127.0.0.1:${PORT}`);
   });
 }
 

@@ -47,25 +47,26 @@ export default function FlatmateMessengerTab({ activeHome, user, homes }) {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
 
-  // Mock list of global users that can be searched
+  // Dynamic user list derived from active workspace members and homes
+  const activeMembers = activeHome?.members || [];
   const globalUserDatabase = [
-    { id: 'u1', name: 'Rohit Verma', username: 'rohit_verma', isFlatmate: true },
-    { id: 'u2', name: 'Aman Sharma', username: 'aman_sharma', isFlatmate: true },
-    { id: 'u3', name: 'Karan Kapoor', username: 'karan_k', isFlatmate: false, distance: '0.3 km' },
-    { id: 'u4', name: 'Riya Joshi', username: 'riya_j', isFlatmate: false, distance: '0.7 km' },
-    { id: 'u5', name: 'Neha Sen', username: 'neha_sen', isFlatmate: false, distance: '1.2 km' },
-    { id: 'u6', name: 'Sanjana Goel', username: 'sanjana_goel', isFlatmate: true },
-    { id: 'u7', name: 'Raj Malhotra', username: 'raj_m', isFlatmate: false, distance: '1.8 km' },
-    { id: 'u8', name: 'Kabir Thapar', username: 'kabir_t', isFlatmate: false, distance: '2.5 km' },
+    ...(user ? [{ id: user.id, name: user.name, username: (user.name || 'user').toLowerCase().replace(/\s+/g, '_'), isFlatmate: true }] : []),
+    ...activeMembers.filter(m => m.id !== user?.id).map(m => ({
+      id: m.id,
+      name: m.name,
+      username: (m.name || 'roommate').toLowerCase().replace(/\s+/g, '_'),
+      isFlatmate: true
+    })),
+    ...friends.filter(f => !activeMembers.some(m => m.id === f.id) && f.id !== user?.id)
   ];
 
-  // Mock nearby users
-  const nearbyUsersList = [
-    { id: 'u3', name: 'Karan Kapoor', username: 'karan_k', distance: '150 meters away', hasRequestSent: false },
-    { id: 'u4', name: 'Riya Joshi', username: 'riya_j', distance: '400 meters away', hasRequestSent: false },
-    { id: 'u5', name: 'Neha Sen', username: 'neha_sen', distance: '850 meters away', hasRequestSent: false },
-    { id: 'u7', name: 'Raj Malhotra', username: 'raj_m', distance: '1.2 km away', hasRequestSent: false },
-  ];
+  // Dynamic nearby flatmates based on workspace
+  const nearbyUsersList = activeMembers.filter(m => m.id !== user?.id).map(m => ({
+    id: m.id,
+    name: m.name,
+    distance: `Roommate in ${activeHome?.name || 'Workspace'}`,
+    hasRequestSent: false
+  }));
 
   const chatEndRef = useRef(null);
 
@@ -78,24 +79,20 @@ export default function FlatmateMessengerTab({ activeHome, user, homes }) {
     if (storedRequests) {
       setRequests(JSON.parse(storedRequests));
     } else {
-      const initialRequests = [
-        { id: 'req1', senderId: 'u3', senderName: 'Karan Kapoor', senderUsername: 'karan_k', timestamp: new Date().toISOString() }
-      ];
-      setRequests(initialRequests);
-      localStorage.setItem(REQUESTS_KEY, JSON.stringify(initialRequests));
+      setRequests([]);
     }
 
-    // Load Friends
+    // Load Friends (defaults to actual flatmates from activeHome)
     const storedFriends = localStorage.getItem(FRIENDS_KEY);
     if (storedFriends) {
       setFriends(JSON.parse(storedFriends));
     } else {
-      // Default friends are current & previous flatmates
-      const defaultFriends = [
-        { id: 'u1', name: 'Rohit Verma', username: 'rohit_verma', isFlatmate: true },
-        { id: 'u2', name: 'Aman Sharma', username: 'aman_sharma', isFlatmate: true },
-        { id: 'u6', name: 'Sanjana Goel', username: 'sanjana_goel', isFlatmate: true }
-      ];
+      const defaultFriends = activeMembers.filter(m => m.id !== user.id).map(m => ({
+        id: m.id,
+        name: m.name,
+        username: (m.name || 'roommate').toLowerCase().replace(/\s+/g, '_'),
+        isFlatmate: true
+      }));
       setFriends(defaultFriends);
       localStorage.setItem(FRIENDS_KEY, JSON.stringify(defaultFriends));
     }
@@ -109,26 +106,29 @@ export default function FlatmateMessengerTab({ activeHome, user, homes }) {
       currentChats = JSON.parse(storedChats);
       setChats(currentChats);
     } else {
-      currentChats = [
-        { 
-          id: 'c1', 
-          name: 'Rohit Verma', 
-          type: 'private', 
-          members: [user.id, 'u1'],
-          avatarText: 'RV',
-          lastMessage: 'Let\'s split the maid bill by Friday.',
-          timestamp: new Date(Date.now() - 3600000).toISOString() 
-        },
-        { 
-          id: 'c2', 
-          name: 'Flat Mate Squad', 
-          type: 'group', 
-          members: [user.id, 'u1', 'u2'],
-          avatarText: 'SG',
-          lastMessage: 'Aman: Added the groceries details.',
-          timestamp: new Date(Date.now() - 172800000).toISOString() 
-        }
-      ];
+      currentChats = [];
+      if (activeHome) {
+        currentChats.push({
+          id: `home-${activeHome.id}`,
+          name: `${activeHome.name} Room Channel`,
+          type: 'group',
+          members: [user.id, ...activeMembers.map(m => m.id)].filter(Boolean),
+          avatarText: (activeHome.name || 'RC').slice(0, 2).toUpperCase(),
+          lastMessage: 'Room channel active.',
+          timestamp: new Date().toISOString()
+        });
+      }
+      activeMembers.filter(m => m.id !== user.id).forEach(rm => {
+        currentChats.push({
+          id: `dm-${rm.id}`,
+          name: rm.name,
+          type: 'private',
+          members: [user.id, rm.id],
+          avatarText: rm.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+          lastMessage: 'Direct conversation ready.',
+          timestamp: new Date().toISOString()
+        });
+      });
       setChats(currentChats);
       localStorage.setItem(CHATS_KEY, JSON.stringify(currentChats));
     }
@@ -136,27 +136,13 @@ export default function FlatmateMessengerTab({ activeHome, user, homes }) {
     if (storedMsgs) {
       setMessages(JSON.parse(storedMsgs));
     } else {
-      const initialMsgs = {
-        'c1': [
-          { id: 'm1', senderId: 'u1', senderName: 'Rohit Verma', text: 'Hey, did you make the electricity payment?', timestamp: new Date(Date.now() - 7200000).toISOString() },
-          { id: 'm2', senderId: user.id, senderName: user.name, text: 'Yes, just updated the shared ledger tab.', timestamp: new Date(Date.now() - 5400000).toISOString() },
-          { id: 'm3', senderId: 'u1', senderName: 'Rohit Verma', text: 'Awesome. Let\'s split the maid bill by Friday.', timestamp: new Date(Date.now() - 3600000).toISOString() }
-        ],
-        'c2': [
-          { id: 'gm1', senderId: 'u2', senderName: 'Aman Sharma', text: 'Hey guys, creating this group chat for flat updates!', timestamp: new Date(Date.now() - 259200000).toISOString() },
-          { id: 'gm2', senderId: 'u1', senderName: 'Rohit Verma', text: 'Perfect, much easier to talk here than other messengers.', timestamp: new Date(Date.now() - 250000000).toISOString() },
-          { id: 'gm3', senderId: 'u2', senderName: 'Aman Sharma', text: 'Aman: Added the groceries details.', timestamp: new Date(Date.now() - 172800000).toISOString() }
-        ]
-      };
-      setMessages(initialMsgs);
-      localStorage.setItem(MESSAGES_KEY, JSON.stringify(initialMsgs));
+      setMessages({});
     }
 
-    // Set first active chat if available
     if (currentChats.length > 0 && !activeChatId) {
       setActiveChatId(currentChats[0].id);
     }
-  }, [user]);
+  }, [user, activeHome]);
 
   // Scroll active chat view to bottom
   useEffect(() => {

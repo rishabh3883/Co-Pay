@@ -42,20 +42,38 @@ export default function ReceiptScannerModal({
   const [rawOcrText, setRawOcrText] = useState('');
   const [showRawText, setShowRawText] = useState(false);
 
-  // Members Split Configuration (defaults to 3-way or all members)
-  // Ensure we have at least 3 members representation for PG/flatmate splitting
-  const rawMembers = activeHome?.members && activeHome.members.length > 0 
-    ? activeHome.members 
-    : [
-        { id: user?.id || 'offline-user-1', name: user?.name || 'You (Me)' },
-        { id: 'offline-user-2', name: 'Aman Sharma' },
-        { id: 'offline-user-3', name: 'Rohit Verma' }
-      ];
+  const [extraRoommates, setExtraRoommates] = useState([]);
+  const [quickRoommateName, setQuickRoommateName] = useState('');
+
+  // Members Split Configuration (purely dynamic based on active workspace + on-the-fly additions)
+  const baseMembers = (activeHome?.members && activeHome.members.length > 0)
+    ? activeHome.members
+    : [{ id: user?.id || 'offline-user-1', name: user?.name || 'You (Me)' }];
+
+  const rawMembers = [
+    ...baseMembers,
+    ...extraRoommates.filter(em => !baseMembers.some(bm => bm.id === em.id || bm.name.toLowerCase() === em.name.toLowerCase()))
+  ];
 
   const [splitMode, setSplitMode] = useState('three_way'); // 'three_way' | 'all' | 'custom'
   const [selectedMemberIds, setSelectedMemberIds] = useState(
     rawMembers.slice(0, 3).map(m => m.id)
   );
+
+  const handleAddQuickRoommate = () => {
+    if (!quickRoommateName.trim()) return;
+    const cleanName = quickRoommateName.trim();
+    const newRm = {
+      id: 'rm-' + Math.random().toString(36).substring(2, 9),
+      name: cleanName
+    };
+    setExtraRoommates(prev => [...prev, newRm]);
+    setSelectedMemberIds(prev => [...prev, newRm.id]);
+    setQuickRoommateName('');
+    if (props.onAddRoommate) {
+      props.onAddRoommate({ name: cleanName });
+    }
+  };
 
   const fileInputRef = useRef(null);
 
@@ -590,6 +608,30 @@ export default function ReceiptScannerModal({
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Quick Add Roommate on-the-fly for splitting */}
+                <div className="pt-2 border-t border-[#121212]/20 flex gap-2 items-center">
+                  <input 
+                    type="text"
+                    placeholder="+ Add Roommate Name to split..."
+                    value={quickRoommateName}
+                    onChange={e => setQuickRoommateName(e.target.value)}
+                    className="flex-1 bg-white border-2 border-[#121212] px-2.5 py-1 text-2xs font-black placeholder-gray-400 focus:outline-none shadow-[2px_2px_0px_0px_#121212]"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddQuickRoommate();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddQuickRoommate}
+                    className="bg-[#1040C0] hover:bg-[#0c3196] text-white px-3 py-1 text-3xs font-black uppercase tracking-wider border-2 border-[#121212] shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                  >
+                    + Add Member
+                  </button>
                 </div>
               </div>
 

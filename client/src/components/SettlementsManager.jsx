@@ -75,7 +75,7 @@ export default function SettlementsManager({
         timestamp: new Date().toISOString()
       };
 
-      const chatGroupId = 'c2'; 
+      const chatGroupId = activeHome ? `home-${activeHome.id}` : 'c2'; 
       if (!messagesMap[chatGroupId]) {
         messagesMap[chatGroupId] = [];
       }
@@ -99,7 +99,7 @@ export default function SettlementsManager({
         localStorage.setItem('co_pay_messenger_chats', JSON.stringify(updatedChats));
       }
       
-      alert("Calculated and posted summary to 'Flat Mate Squad' group chat & launched WhatsApp!");
+      alert(`Calculated and posted summary to '${activeHome?.name || 'Room'}' group chat & launched WhatsApp!`);
     } catch (e) {
       console.error("Internal chat message broadcast failed", e);
     }

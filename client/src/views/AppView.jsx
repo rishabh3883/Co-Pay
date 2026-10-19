@@ -69,6 +69,10 @@ export default function AppView() {
     isRegistering, setIsRegistering,
     authForm, setAuthForm,
     authError, setAuthError,
+    homeForm, setHomeForm,
+    joinCode, setJoinCode,
+    handleJoinHome, handleCreateHome,
+    handleAddRoommate, handleRemoveRoommate,
     isListening,
     voiceDraft, setVoiceDraft,
     handleStartVoiceRecognition, handleCommitVoiceDraft,
@@ -79,7 +83,7 @@ export default function AppView() {
     settlementRefId, setSettlementRefId,
     handleSubmitSettlementPayment, isSubmittingPayment,
     categoryColors, calculationsData,
-    handleLogout, handleAuthSubmit,
+    handleLogout, handleAuthSubmit, handleQuickDemoLogin,
   } = appState;
 
   // Sidebar state
@@ -97,131 +101,330 @@ export default function AppView() {
 
   const isSidebarTab = sidebarItems.some(i => i.key === activeTab);
 
+  // ══════════════════════════════════════════════════════════════════
+  // ── STEP 1: AUTHENTICATION SCREEN (LOGIN & REGISTER OPTIONS) ──
+  // ══════════════════════════════════════════════════════════════════
   if (!token) {
-    if (showBrief) {
-      return (
-        <BauhausLanding
-          onEnterApp={() => setShowBrief(false)}
-          onOpenLogin={() => {
-            setIsRegistering(false);
-            setShowBrief(false);
-          }}
-          onOpenRegister={() => {
-            setIsRegistering(true);
-            setShowBrief(false);
-          }}
-        />
-      );
-    }
-
     return (
-      <div className="min-h-screen bg-[#F0F0F0] text-[#121212] font-bauhaus flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-[#F0F0F0] text-[#121212] font-bauhaus flex items-center justify-center p-4 relative overflow-hidden selection:bg-[#F0C020]">
         {/* Background Bauhaus Graphic Shapes */}
         <div className="absolute top-8 left-8 w-32 h-32 rounded-full bg-[#D02020] border-4 border-[#121212] opacity-35 pointer-events-none"></div>
         <div className="absolute bottom-8 right-8 w-36 h-36 bg-[#1040C0] border-4 border-[#121212] rotate-12 opacity-35 pointer-events-none"></div>
         <div className="absolute top-1/2 left-4 w-24 h-24 bg-[#F0C020] bauhaus-triangle border-4 border-[#121212] opacity-30 pointer-events-none"></div>
 
-        <div className="w-full max-w-md bg-white border-4 border-[#121212] p-8 sm:p-10 bauhaus-shadow-lg relative z-10">
+        <div className="w-full max-w-md bg-white border-4 border-[#121212] p-6 sm:p-8 shadow-[8px_8px_0px_0px_#121212] relative z-10">
           
           {/* Top Primary Color Bar */}
-          <div className="flex h-3 border-2 border-black mb-6">
+          <div className="flex h-3 border-2 border-black mb-5">
             <div className="w-1/3 bg-[#D02020]"></div>
             <div className="w-1/3 bg-[#1040C0]"></div>
             <div className="w-1/3 bg-[#F0C020]"></div>
           </div>
 
           {/* Logo Header */}
-          <div className="flex items-center justify-between mb-6 border-b-4 border-[#121212] pb-4">
+          <div className="flex items-center justify-between mb-5 border-b-4 border-[#121212] pb-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 p-1 bg-[#121212]">
                 <div className="w-3 h-3 rounded-full bg-[#D02020]"></div>
                 <div className="w-3 h-3 rounded-none bg-[#1040C0]"></div>
                 <div className="w-3 h-3 bg-[#F0C020] bauhaus-triangle"></div>
               </div>
-              <span className="text-2xl font-black uppercase tracking-tight">CO-PAY</span>
+              <span className="text-2xl font-black uppercase tracking-tight">CO-PAY<span className="text-[#1040C0]">.</span></span>
             </div>
             <span className="text-2xs font-mono font-black uppercase bg-[#121212] text-white px-2 py-0.5">
-              PORTAL 1919
+              STEP 01: AUTH
             </span>
           </div>
 
-          <h2 className="text-2xl font-black uppercase tracking-tight text-[#121212] mb-1">
-            {isRegistering ? 'ESTABLISH CLAN' : 'AUTHENTICATE'}
+          {/* Explicit Tabs: 01 LOGIN | 02 REGISTER */}
+          <div className="grid grid-cols-2 gap-1.5 mb-5 border-3 border-[#121212] p-1 bg-[#F0F0F0]">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(false);
+                setAuthError(null);
+              }}
+              className={`py-2 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-2 ${
+                !isRegistering
+                  ? 'bg-[#1040C0] text-white border-[#121212] shadow-[2px_2px_0px_0px_#121212]'
+                  : 'bg-transparent text-gray-700 border-transparent hover:bg-white'
+              }`}
+            >
+              01 / LOGIN
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(true);
+                setAuthError(null);
+              }}
+              className={`py-2 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-2 ${
+                isRegistering
+                  ? 'bg-[#D02020] text-white border-[#121212] shadow-[2px_2px_0px_0px_#121212]'
+                  : 'bg-transparent text-gray-700 border-transparent hover:bg-white'
+              }`}
+            >
+              02 / REGISTER
+            </button>
+          </div>
+
+          <h2 className="text-xl font-black uppercase tracking-tight text-[#121212] mb-1">
+            {isRegistering ? 'CREATE NEW ACCOUNT' : 'SIGN IN TO YOUR LEDGER'}
           </h2>
-          <p className="text-xs font-bold uppercase text-gray-600 mb-6 tracking-wide">
+          <p className="text-xs font-bold uppercase text-gray-600 mb-5 tracking-wide">
             {isRegistering 
-              ? 'FORM FOLLOWS FUNCTION · PEER-REVIEWED FINANCIAL LEDGER' 
-              : 'ENTER YOUR ROOMMATE CREDENTIALS TO RESOLVE SPLITS'}
+              ? 'REGISTER YOUR PROFILE TO CREATE OR JOIN FLAT ROOMS' 
+              : 'ENTER YOUR CREDENTIALS TO ACCESS YOUR WORKSPACE'}
           </p>
 
           {authError && (
-            <div className="bg-[#D02020] text-white border-2 border-[#121212] p-3 mb-5 text-xs font-black uppercase flex items-center gap-2 bauhaus-shadow-sm">
+            <div className="bg-[#D02020] text-white border-2 border-[#121212] p-3 mb-5 text-xs font-black uppercase flex items-center gap-2 shadow-[2px_2px_0px_0px_#121212]">
               <ShieldAlert className="w-4 h-4 shrink-0" />
               <span>{authError}</span>
             </div>
           )}
 
-          <form onSubmit={handleAuthSubmit} className="space-y-4">
+          <form onSubmit={handleAuthSubmit} className="space-y-3.5">
             {isRegistering && (
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1">FULL NAME</label>
+                <label className="block text-3xs font-black uppercase tracking-wider mb-1">YOUR FULL NAME</label>
                 <input 
                   type="text" 
                   required
-                  placeholder="E.G. AMAN SHARMA" 
+                  placeholder="E.G. ALEX MORGAN" 
                   value={authForm.name}
                   onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
-                  className="w-full bg-[#F0F0F0] border-2 sm:border-4 border-[#121212] p-3 text-sm font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white transition-colors"
+                  className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-2.5 text-xs font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
                 />
               </div>
             )}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider mb-1">EMAIL IDENTIFIER</label>
+              <label className="block text-3xs font-black uppercase tracking-wider mb-1">EMAIL ADDRESS</label>
               <input 
                 type="email" 
                 required
                 placeholder="YOURNAME@DOMAIN.COM" 
                 value={authForm.email}
                 onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
-                className="w-full bg-[#F0F0F0] border-2 sm:border-4 border-[#121212] p-3 text-sm font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white transition-colors"
+                className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-2.5 text-xs font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
               />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider mb-1">PASSWORD KEY</label>
+              <label className="block text-3xs font-black uppercase tracking-wider mb-1">PASSWORD</label>
               <input 
                 type="password" 
                 required
                 placeholder="••••••••" 
                 value={authForm.password}
                 onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
-                className="w-full bg-[#F0F0F0] border-2 sm:border-4 border-[#121212] p-3 text-sm font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white transition-colors"
+                className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-2.5 text-xs font-bold uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
               />
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-[#D02020] text-white border-4 border-[#121212] font-black uppercase text-sm py-3.5 bauhaus-shadow-sm bauhaus-btn-press cursor-pointer hover:bg-[#D02020]/90 transition-colors mt-2"
+              className={`w-full text-white border-3 border-[#121212] font-black uppercase text-xs sm:text-sm py-3 cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all mt-1 ${
+                isRegistering ? 'bg-[#D02020] hover:bg-[#b01818]' : 'bg-[#1040C0] hover:bg-[#0c3196]'
+              }`}
             >
-              {isRegistering ? 'INITIALIZE CLAN' : 'SIGN IN TO LEDGER'}
+              {isRegistering ? 'REGISTER ACCOUNT &rarr;' : 'SIGN IN & CONTINUE &rarr;'}
+            </button>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t-2 border-[#121212]"></div>
+              <span className="flex-shrink mx-2 text-3xs font-black uppercase tracking-widest text-gray-500">OR QUICK ACCESS</span>
+              <div className="flex-grow border-t-2 border-[#121212]"></div>
+            </div>
+
+            <button 
+              type="button"
+              onClick={handleQuickDemoLogin}
+              className="w-full bg-[#F0C020] hover:bg-[#ebd564] text-[#121212] border-3 border-[#121212] font-black uppercase text-xs py-2.5 shadow-[3px_3px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>⚡ 1-CLICK INSTANT DEMO ENTRY</span>
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t-2 border-[#121212] flex flex-col gap-2.5 text-center">
+          <div className="mt-5 pt-3 border-t-2 border-[#121212] flex flex-col gap-2 text-center">
             <button 
+              type="button"
               onClick={() => {
                 setIsRegistering(!isRegistering);
                 setAuthError(null);
               }}
               className="text-xs font-black uppercase hover:underline text-[#1040C0] cursor-pointer"
             >
-              {isRegistering ? 'ALREADY ACTIVE? SIGN IN INSTEAD' : 'NEW RESIDENCE? ESTABLISH NEW CLAN'}
+              {isRegistering ? 'ALREADY HAVE AN ACCOUNT? SIGN IN INSTEAD' : 'NO ACCOUNT YET? REGISTER HERE'}
             </button>
-            <button 
-              onClick={() => setShowBrief(true)}
-              className="text-xs font-bold uppercase text-gray-500 hover:text-black cursor-pointer"
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── STEP 2: ROOM ONBOARDING SCREEN (JOIN OR CREATE ROOM) ──
+  // ══════════════════════════════════════════════════════════════════
+  if (homes.length === 0 || !activeHomeId) {
+    return (
+      <div className="min-h-screen bg-[#F0F0F0] text-[#121212] font-bauhaus flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden selection:bg-[#F0C020]">
+        {/* Background Decorative Shapes */}
+        <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-[#D02020] border-4 border-[#121212] opacity-25 pointer-events-none"></div>
+        <div className="absolute bottom-10 right-10 w-44 h-44 bg-[#1040C0] border-4 border-[#121212] rotate-12 opacity-25 pointer-events-none"></div>
+        <div className="absolute top-1/3 right-12 w-28 h-28 bg-[#F0C020] bauhaus-triangle border-4 border-[#121212] opacity-25 pointer-events-none"></div>
+
+        <div className="w-full max-w-3xl bg-white border-4 border-[#121212] shadow-[10px_10px_0px_0px_#121212] relative z-10 overflow-hidden">
+          
+          {/* Top Primary Accent Bar */}
+          <div className="flex h-3 border-b-2 border-[#121212]">
+            <div className="w-1/3 bg-[#D02020]"></div>
+            <div className="w-1/3 bg-[#1040C0]"></div>
+            <div className="w-1/3 bg-[#F0C020]"></div>
+          </div>
+
+          {/* Header */}
+          <div className="bg-[#F0C020] p-5 sm:p-6 border-b-4 border-[#121212] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-4 h-4 bg-[#D02020] border-2 border-[#121212]"></div>
+                <span className="text-2xs font-mono font-black uppercase tracking-widest text-[#121212]">
+                  AUTHENTICATED · STEP 02 // ROOM SETUP
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black uppercase text-[#121212] tracking-tight">
+                WELCOME, {user?.name || 'ROOMMATE'}!
+              </h2>
+              <p className="text-xs font-bold text-[#121212] uppercase tracking-wide mt-0.5">
+                SELECT AN OPTION BELOW: JOIN AN EXISTING ROOM OR ESTABLISH A NEW ROOM
+              </p>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="bg-white hover:bg-[#D02020] text-[#121212] hover:text-white border-3 border-[#121212] px-3.5 py-1.5 text-xs font-black uppercase shadow-[2px_2px_0px_0px_#121212] cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shrink-0 flex items-center gap-1.5"
             >
-              ← RETURN TO BAUHAUS MANIFESTO
+              <LogOut className="w-3.5 h-3.5" />
+              <span>LOGOUT</span>
             </button>
+          </div>
+
+          {/* Two Distinct Options Grid */}
+          <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#F8F8F8]">
+            
+            {/* OPTION 1: Join Existing Room */}
+            <div className="bg-white border-4 border-[#121212] p-6 shadow-[6px_6px_0px_0px_#1040C0] flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between border-b-2 border-[#121212] pb-3 mb-3">
+                  <span className="bg-[#1040C0] text-white text-3xs font-mono font-black px-2 py-0.5 uppercase tracking-wider">
+                    OPTION 01
+                  </span>
+                  <span className="text-xs font-black text-gray-500 uppercase tracking-widest font-mono">
+                    PEHLE SE BANA ROOM
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-[#121212] uppercase tracking-tight flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#1040C0]" />
+                  JOIN EXISTING ROOM
+                </h3>
+                <p className="text-xs font-bold text-gray-600 mt-1 leading-relaxed">
+                  Have an invite code from your flatmates? Enter it below to join their room ledger instantly.
+                </p>
+              </div>
+
+              <form onSubmit={handleJoinHome} className="space-y-3 pt-2">
+                <div>
+                  <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-[#1040C0]">
+                    ROOM INVITE CODE:
+                  </label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="ENTER CODE (E.G. COPLAY)" 
+                    value={joinCode}
+                    onChange={e => setJoinCode(e.target.value)}
+                    className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-3 text-sm font-mono font-black uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-[#1040C0] hover:bg-[#0c3196] text-white border-3 border-[#121212] font-black uppercase text-xs py-3.5 shadow-[4px_4px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>JOIN FLAT ROOM NOW &rarr;</span>
+                </button>
+              </form>
+            </div>
+
+            {/* OPTION 2: Create New Room */}
+            <div className="bg-white border-4 border-[#121212] p-6 shadow-[6px_6px_0px_0px_#D02020] flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between border-b-2 border-[#121212] pb-3 mb-3">
+                  <span className="bg-[#D02020] text-white text-3xs font-mono font-black px-2 py-0.5 uppercase tracking-wider">
+                    OPTION 02
+                  </span>
+                  <span className="text-xs font-black text-gray-500 uppercase tracking-widest font-mono">
+                    NAYA ROOM BANAYEIN
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-black text-[#121212] uppercase tracking-tight flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-[#D02020]" />
+                  CREATE NEW ROOM
+                </h3>
+                <p className="text-xs font-bold text-gray-600 mt-1 leading-relaxed">
+                  Moving into a new flat or PG? Set up a fresh room space, configure target budget, and invite flatmates.
+                </p>
+              </div>
+
+              <form onSubmit={handleCreateHome} className="space-y-3 pt-2">
+                <div>
+                  <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-[#D02020]">
+                    ROOM / FLAT NAME:
+                  </label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="E.G. FLAT 4B / GREENWOOD PG" 
+                    value={homeForm.name}
+                    onChange={e => setHomeForm({ ...homeForm, name: e.target.value })}
+                    className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-3 text-sm font-black uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-gray-700">
+                    MONTHLY TARGET BUDGET (₹):
+                  </label>
+                  <input 
+                    type="number" 
+                    required
+                    placeholder="25000" 
+                    value={homeForm.monthlyBudget}
+                    onChange={e => setHomeForm({ ...homeForm, monthlyBudget: e.target.value })}
+                    className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-2.5 text-xs font-mono font-black uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-[#D02020] hover:bg-[#b01818] text-white border-3 border-[#121212] font-black uppercase text-xs py-3.5 shadow-[4px_4px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>ESTABLISH NEW ROOM &rarr;</span>
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          {/* Footer banner */}
+          <div className="bg-white border-t-4 border-[#121212] p-3.5 text-center">
+            <span className="text-3xs font-mono font-black uppercase tracking-widest text-gray-500">
+              CO-PAY · PEER-REVIEWED SHARED FINANCES · SECURED LEDGER ARCHITECTURE
+            </span>
           </div>
 
         </div>

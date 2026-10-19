@@ -48,6 +48,10 @@ import {
 export default function SharedTab(props) {
   const { theme, toggleTheme, canvasRef, token, setToken, user, setUser, isRegistering, setIsRegistering, authForm, setAuthForm, authError, setAuthError, showBrief, setShowBrief, homes, setHomes, activeHomeId, setActiveHomeId, activeHome, setActiveHome, expenses, setExpenses, settlement, setSettlement, aiInsights, setAiInsights, homeForm, setHomeForm, joinCode, setJoinCode, expenseForm, setExpenseForm, personalExpenseForm, setPersonalExpenseForm, userBudgetInput, setUserBudgetInput, homeBudgetInput, setHomeBudgetInput, editingExpenseId, setEditingExpenseId, calcSubTab, setCalcSubTab, calcTab, setCalcTab, activeTab, setActiveTab, sharedFilter, setSharedFilter, personalFilter, setPersonalFilter, showQR, setShowQR, calendarEvents, setCalendarEvents, selectedDate, setSelectedDate, newEventText, setNewEventText, profilePhone, setProfilePhone, profileUpi, setProfileUpi, isUpdatingProfile, setIsUpdatingProfile, reminders, setReminders, isSendingReminderId, setIsSendingReminderId, settlementPayments, setSettlementPayments, selectedSettlementPayee, setSelectedSettlementPayee, settlementRefId, setSettlementRefId, isSubmittingPayment, setIsSubmittingPayment, isVerifyingPaymentId, setIsVerifyingPaymentId, isListening, setIsListening, voiceDraft, setVoiceDraft, voiceError, setVoiceError, recurringTemplates, setRecurringTemplates, editingTemplate, setEditingTemplate, isAddingTemplate, setIsAddingTemplate, templateForm, setTemplateForm, isBackendConnected, setIsBackendConnected, apiFetch, loadData, loadOfflineFallback, fetchHomeData, loadOfflineHomeData, calculateOfflineSettlement, handleAuthSubmit, handleLogout, handleCreateHome, handleJoinHome, handleAddSharedExpense, handleDeleteSharedExpense, handleAddCalendarEvent, handleDeleteCalendarEvent, handleUpdateProfile, handleSendReminder, handleSubmitSettlementPayment, handleVerifySettlementPayment, handleStartVoiceRecognition, handleCommitVoiceDraft, handleApproveExpense, handleAddPersonalExpense, handleDeletePersonalExpense, handleUpdatePersonalBudget, handleUpdateHomeBudget, handleDirectSettle, handleTriggerRecurring, handleFileChange, handleExport, getWeekNumber, getWeekRange, personalExpensesTotal, myNetBalance, fixedLiabilityShare, spentAgainstBudget, filteredPersonalExpenses, filteredSharedExpenses, personalDailyChartData, personalCategoryPieData, sharedCategoryBarData, contributionGridCells, leaderboardRankings, categoryColors } = props;
 
+  const [isAddingRoommate, setIsAddingRoommate] = useState(false);
+  const [newRoommateName, setNewRoommateName] = useState('');
+  const [newRoommateUpi, setNewRoommateUpi] = useState('');
+
   return (
     <>
       <div className="space-y-6">
@@ -207,7 +211,52 @@ export default function SharedTab(props) {
 
                     {/* Roommate Roster */}
                     <div className="space-y-2 border-l border-gray-800 pl-0 md:pl-6">
-                      <span className="text-4xs font-mono text-gray-500 uppercase tracking-wider block">ROOMMATE ROSTER ({activeHome.members?.length || 1})</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-4xs font-mono text-gray-500 uppercase tracking-wider block">
+                          ROOMMATE ROSTER ({activeHome.members?.length || 1})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingRoommate(!isAddingRoommate)}
+                          className="text-4xs font-mono text-purple-400 hover:text-purple-300 uppercase underline cursor-pointer"
+                        >
+                          {isAddingRoommate ? 'Cancel' : '+ Add Roommate'}
+                        </button>
+                      </div>
+
+                      {isAddingRoommate && (
+                        <div className="bg-gray-950 p-2.5 rounded border border-purple-500/30 space-y-2 text-xs">
+                          <input 
+                            type="text"
+                            placeholder="Roommate Name (e.g. Rahul)"
+                            value={newRoommateName}
+                            onChange={e => setNewRoommateName(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          />
+                          <input 
+                            type="text"
+                            placeholder="Optional UPI ID (e.g. rahul@upi)"
+                            value={newRoommateUpi}
+                            onChange={e => setNewRoommateUpi(e.target.value)}
+                            className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (newRoommateName.trim() && props.handleAddRoommate) {
+                                props.handleAddRoommate({ name: newRoommateName, upiId: newRoommateUpi });
+                                setNewRoommateName('');
+                                setNewRoommateUpi('');
+                                setIsAddingRoommate(false);
+                              }
+                            }}
+                            className="w-full bg-purple-600 hover:bg-purple-500 text-white text-2xs font-bold py-1.5 rounded cursor-pointer transition-colors"
+                          >
+                            Save Roommate to Room
+                          </button>
+                        </div>
+                      )}
+
                       <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
                         {activeHome.members?.map(m => (
                           <div key={m.id} className="flex items-center gap-2 text-xs bg-gray-950/40 p-2 rounded border border-gray-900">
@@ -215,8 +264,19 @@ export default function SharedTab(props) {
                               {m.name.charAt(0)}
                             </div>
                             <span className="font-medium text-gray-300 truncate">{m.name}</span>
-                            {activeHome.adminId === m.id && (
+                            {activeHome.adminId === m.id ? (
                               <span className="text-4xs bg-purple-950 text-purple-300 px-1 py-0.2 rounded font-mono border border-purple-500/20 ml-auto">Admin</span>
+                            ) : (
+                              props.handleRemoveRoommate && m.id !== user?.id && (
+                                <button
+                                  type="button"
+                                  onClick={() => props.handleRemoveRoommate(m.id)}
+                                  className="text-gray-500 hover:text-red-400 text-4xs font-mono ml-auto cursor-pointer"
+                                  title="Remove roommate"
+                                >
+                                  ✕
+                                </button>
+                              )
                             )}
                           </div>
                         ))}
