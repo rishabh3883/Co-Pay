@@ -28,26 +28,87 @@ export default function AddMemberModal({
   const [email, setEmail] = useState('');
   const [upiId, setUpiId] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [formError, setFormError] = useState(null);
 
   if (!isOpen || !activeHome) return null;
 
   const handleCopySameAsPhone = () => {
     if (phone.trim()) {
       setWhatsapp(phone.trim());
+      setFormError(null);
     }
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    setFormError(null);
+
+    const cleanName = name.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setFormError('Member name is required and must be at least 2 characters.');
+      return;
+    }
+
+    // Phone validation (if provided)
+    const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+    if (cleanPhone) {
+      const phoneDigits = cleanPhone.replace(/^\+91/, '');
+      if (!/^\d{10}$/.test(phoneDigits)) {
+        setFormError('Please enter a valid 10-digit mobile number (e.g. 9876543210).');
+        return;
+      }
+    }
+
+    // WhatsApp validation (if provided)
+    const cleanWhatsapp = (whatsapp.trim() || phone.trim()).replace(/[\s-]/g, '');
+    if (cleanWhatsapp) {
+      const waDigits = cleanWhatsapp.replace(/^\+91/, '');
+      if (!/^\d{10}$/.test(waDigits)) {
+        setFormError('Please enter a valid 10-digit WhatsApp number.');
+        return;
+      }
+    }
+
+    // Email validation (if provided)
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        setFormError('Please enter a valid email address (e.g. roommate@gmail.com).');
+        return;
+      }
+    }
+
+    // UPI ID validation (if provided)
+    const cleanUpi = upiId.trim();
+    if (cleanUpi) {
+      if (!cleanUpi.includes('@') || cleanUpi.length < 4) {
+        setFormError('Please enter a valid UPI ID containing "@" (e.g. mobile@upi or name@okaxis).');
+        return;
+      }
+    }
+
+    // Duplicate check in existing room roster
+    const currentMembers = activeHome.members || [];
+    const isDuplicate = currentMembers.some(m => {
+      if (m.name && m.name.toLowerCase() === cleanName.toLowerCase()) return true;
+      if (cleanEmail && m.email && m.email.toLowerCase() === cleanEmail) return true;
+      if (cleanPhone && m.phone && m.phone.replace(/[\s-]/g, '') === cleanPhone) return true;
+      return false;
+    });
+
+    if (isDuplicate) {
+      setFormError(`A roommate with the name "${cleanName}" or this email/phone is already in this room!`);
+      return;
+    }
 
     if (onAddMember) {
       await onAddMember({
-        name: name.trim(),
-        phone: phone.trim(),
-        whatsapp: whatsapp.trim() || phone.trim(),
-        email: email.trim(),
-        upiId: upiId.trim()
+        name: cleanName,
+        phone: cleanPhone,
+        whatsapp: cleanWhatsapp,
+        email: cleanEmail,
+        upiId: cleanUpi
       });
     }
 
@@ -57,6 +118,7 @@ export default function AddMemberModal({
     setWhatsapp('');
     setEmail('');
     setUpiId('');
+    setFormError(null);
   };
 
   const handleCopyInvite = () => {
@@ -141,6 +203,13 @@ export default function AddMemberModal({
                 ALL CONTACTS SYNC WITH ROOM
               </span>
             </div>
+
+            {formError && (
+              <div className="bg-[#D02020] text-white border-2 border-[#121212] p-2.5 text-xs font-black uppercase shadow-[2px_2px_0px_0px_#121212] flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{formError}</span>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               

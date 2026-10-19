@@ -23,7 +23,26 @@ router.post('/', authMiddleware, async (req, res) => {
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const list = await dbStore.findUserHomes(req.userId);
-    return res.json(list);
+    const populated = await Promise.all(list.map(async h => {
+      const memberIds = Array.isArray(h.members) ? h.members : [];
+      const membersDetail = [];
+      for (const mId of memberIds) {
+        const u = await dbStore.findUserById(mId);
+        if (u) {
+          membersDetail.push({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            upiId: u.upiId || '',
+            streaks: u.streaks || 1,
+            badges: u.id === h.adminId ? ['Creator'] : (u.badges || ['Roommate'])
+          });
+        }
+      }
+      return { ...h, members: membersDetail };
+    }));
+    return res.json(populated);
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -42,14 +61,35 @@ router.post('/join', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Invalid invite code.' });
     }
 
-    if (home.members.includes(req.userId)) {
-      return res.status(400).json({ message: 'You are already a member of this home.' });
+    const memberIds = Array.isArray(home.members) ? home.members : [];
+    let updatedMembers = [...memberIds];
+    if (!updatedMembers.includes(req.userId)) {
+      updatedMembers.push(req.userId);
     }
 
-    const updatedMembers = [...home.members, req.userId];
     const updated = await dbStore.updateHome(home.id, { members: updatedMembers });
 
-    return res.json(updated);
+    // Populate all members
+    const membersDetail = [];
+    for (const mId of updatedMembers) {
+      const u = await dbStore.findUserById(mId);
+      if (u) {
+        membersDetail.push({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone || '',
+          upiId: u.upiId || '',
+          streaks: u.streaks || 1,
+          badges: u.id === home.adminId ? ['Creator'] : (u.badges || ['Roommate'])
+        });
+      }
+    }
+
+    return res.json({
+      ...(updated || home),
+      members: membersDetail
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -87,6 +127,30 @@ router.get('/:homeId', authMiddleware, async (req, res) => {
       ...home,
       members: membersDetail
     });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+// Add member to home
+router.post('/:homeId/members', authMiddleware, async (req, res) => {
+  try {
+    const { homeId } = req.params;
+    const { name, email, phone, upiId } = req.body;
+    const home = await dbStore.findHomeById(homeId);
+    if (!home) return res.status(404).json({ message: 'Home not found' });
+
+    let memberId = 'usr_' + Math.random().toString(36).substring(2, 9);
+    if (email) {
+      const existingUser = await dbStore.findUserByEmail(email);
+      if (existingUser) memberId = existingUser.id;
+    }
+    const currentMembers = Array.isArray(home.members) ? home.members : [];
+    if (!currentMembers.includes(memberId)) {
+      currentMembers.push(memberId);
+      await dbStore.updateHome(homeId, { members: currentMembers });
+    }
+    return res.json({ success: true, memberId });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

@@ -696,9 +696,16 @@ export default function useAppController() {
 
   const handleCreateHome = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!homeForm.name || !homeForm.name.trim()) return;
+    const trimmedName = homeForm?.name?.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      alert('Validation Error: Room name must be at least 2 characters.');
+      return;
+    }
+    if (trimmedName.length > 50) {
+      alert('Validation Error: Room name must not exceed 50 characters.');
+      return;
+    }
     try {
-      const trimmedName = homeForm.name.trim();
       if (isBackendConnected) {
         const newHome = await apiFetch('/homes', {
           method: 'POST',
@@ -745,20 +752,30 @@ export default function useAppController() {
       // Automatically pop open the Add Members modal after creating room
       setIsAddMemberModalOpen(true);
     } catch (err) {
-      alert('Error creating workspace');
+      alert('Error creating workspace: ' + (err.message || 'Please check your inputs'));
     }
   };
 
   const handleJoinHome = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!joinCode || !joinCode.trim()) return;
-    const cleanCode = joinCode.trim().toUpperCase();
+    const cleanCode = joinCode?.trim()?.toUpperCase();
+    if (!cleanCode || cleanCode.length < 3) {
+      alert('Validation Error: Please enter a valid room invite code (at least 3 characters).');
+      return;
+    }
 
     try {
       if (isBackendConnected) {
         const joinedHome = await apiFetch('/homes/join', {
           method: 'POST',
-          body: JSON.stringify({ inviteCode: cleanCode })
+          body: JSON.stringify({ 
+            inviteCode: cleanCode,
+            userId: user?.id,
+            userName: user?.name,
+            userEmail: user?.email,
+            phone: user?.phone,
+            upiId: user?.upiId
+          })
         });
         const existingIdx = homes.findIndex(h => h.id === joinedHome.id);
         const updated = existingIdx >= 0 ? homes.map(h => h.id === joinedHome.id ? joinedHome : h) : [...homes, joinedHome];
@@ -766,6 +783,8 @@ export default function useAppController() {
         localStorage.setItem('mockHomes', JSON.stringify(updated));
         setActiveHomeId(joinedHome.id);
         setActiveHome(joinedHome);
+        // Refresh full workspace data so all members and ledger are synced
+        setTimeout(() => loadData(), 300);
       } else {
         // Offline / sandbox room join
         const allKnown = JSON.parse(localStorage.getItem('mockHomes') || '[]');
@@ -862,6 +881,18 @@ export default function useAppController() {
       calculateOfflineSettlement(updatedHome, currentExpenses);
     }
 
+    if (isBackendConnected) {
+      apiFetch(`/homes/${activeHomeId}/members`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: cleanName,
+          email: newMember.email,
+          phone: cleanPhone,
+          upiId: newMember.upiId
+        })
+      }).catch(() => {});
+    }
+
     confetti({ particleCount: 50, colors: ['#10B981', '#6366F1'] });
     return newMember;
   };
@@ -899,7 +930,24 @@ export default function useAppController() {
   const handleAddSharedExpense = async (e) => {
     e.preventDefault();
     const { title, category, amount, date, notes, needsApproval, billImage } = expenseForm;
-    if (!title || !amount) return;
+    const cleanTitle = title?.trim();
+    if (!cleanTitle || cleanTitle.length < 2) {
+      alert('Validation Error: Expense title must be at least 2 characters.');
+      return;
+    }
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Validation Error: Expense amount must be a positive number greater than ₹0.');
+      return;
+    }
+    if (numAmount > 10000000) {
+      alert('Validation Error: Expense amount exceeds ₹1,00,00,000 maximum limit.');
+      return;
+    }
+    if (!date) {
+      alert('Validation Error: Please select an expense date.');
+      return;
+    }
 
     try {
       if (editingExpenseId) {
@@ -1082,6 +1130,11 @@ export default function useAppController() {
   const handleSubmitSettlementPayment = async (e) => {
     e.preventDefault();
     if (!selectedSettlementPayee) return;
+    const cleanRef = settlementRefId?.trim();
+    if (!cleanRef || cleanRef.length < 4) {
+      alert('Validation Error: Please enter a valid payment reference or transaction UTR (at least 4 characters).');
+      return;
+    }
     setIsSubmittingPayment(true);
     try {
       if (isBackendConnected) {
@@ -1463,7 +1516,24 @@ export default function useAppController() {
   const handleAddPersonalExpense = async (e) => {
     e.preventDefault();
     const { title, category, amount, date, notes } = personalExpenseForm;
-    if (!title || !amount) return;
+    const cleanTitle = title?.trim();
+    if (!cleanTitle || cleanTitle.length < 2) {
+      alert('Validation Error: Personal expense title must be at least 2 characters.');
+      return;
+    }
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Validation Error: Personal expense amount must be a positive number greater than ₹0.');
+      return;
+    }
+    if (numAmount > 10000000) {
+      alert('Validation Error: Expense amount exceeds ₹1,00,00,000 maximum limit.');
+      return;
+    }
+    if (!date) {
+      alert('Validation Error: Please select an expense date.');
+      return;
+    }
 
     try {
       if (isBackendConnected) {

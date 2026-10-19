@@ -18,6 +18,45 @@ async function parseBody(req) {
   }
 }
 
+async function populateHomeMembers(home, allUsers) {
+  const memberIds = Array.isArray(home.members) ? home.members : [];
+  // Ensure adminId is in the list
+  if (home.adminId && !memberIds.includes(home.adminId)) {
+    memberIds.unshift(home.adminId);
+  }
+
+  const populated = memberIds.map(mId => {
+    // If it's already an object with name, keep it
+    if (typeof mId === 'object' && mId !== null && mId.name) return mId;
+
+    const found = allUsers.find(u => u.id === mId || u.email === mId);
+    if (found) {
+      return {
+        id: found.id,
+        name: found.name,
+        email: found.email,
+        phone: found.phone || '',
+        whatsapp: found.phone || '',
+        upiId: found.upiId || '',
+        streaks: found.streaks || 1,
+        badges: found.id === home.adminId ? ['Creator'] : (found.badges || ['Roommate'])
+      };
+    }
+    return {
+      id: mId,
+      name: mId === home.adminId ? 'Roommate (Admin)' : 'Roommate',
+      email: '',
+      phone: '',
+      whatsapp: '',
+      upiId: '',
+      streaks: 1,
+      badges: mId === home.adminId ? ['Creator'] : ['Roommate']
+    };
+  });
+
+  return { ...home, members: populated };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,6 +72,8 @@ export default async function handler(req, res) {
 
   // Extract user info from Authorization header if present
   let authUserId = 'usr_me';
+  let authUserEmail = '';
+  let authUserName = 'Roommate';
   const authHeader = req.headers.authorization || '';
   if (authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
@@ -41,6 +82,8 @@ export default async function handler(req, res) {
       if (parts.length === 3) {
         const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
         if (payload.userId || payload.id) authUserId = payload.userId || payload.id;
+        if (payload.email) authUserEmail = payload.email.toLowerCase();
+        if (payload.name) authUserName = payload.name;
       }
     } catch (_) {}
   }
@@ -54,13 +97,15 @@ export default async function handler(req, res) {
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const createdAt = new Date().toISOString();
 
+    const creatorId = body.adminId || authUserId;
+
     const newHome = {
       id: homeId,
       name: homeName,
       inviteCode,
-      adminId: authUserId,
+      adminId: creatorId,
       monthlyBudget,
-      members: [authUserId],
+      members: [creatorId],
       createdAt
     };
 
@@ -78,33 +123,53 @@ export default async function handler(req, res) {
 
       if (insertRes.ok) {
         const inserted = await insertRes.json();
-        return res.status(201).json(Array.isArray(inserted) ? inserted[0] : newHome);
+        const baseHome = Array.isArray(inserted) ? inserted[0] : newHome;
+        // Fetch users to populate
+        const usersRes = await fetch(`${SUPABASE_REST}/users?select=*`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        });
+        const allUsers = usersRes.ok ? await usersRes.json() : [];
+        const populated = await populateHomeMembers(baseHome, allUsers);
+        return res.status(201).json(populated);
       }
     } catch (e) {
       console.warn('Supabase homes insert error:', e.message);
     }
 
-    return res.status(201).json(newHome);
+    const fallbackMembers = [
+      { id: creatorId, name: authUserName, email: authUserEmail, streaks: 1, badges: ['Creator'] }
+    ];
+    return res.status(201).json({ ...newHome, members: fallbackMembers });
   }
 
   // GET: Fetch all homes
   if (req.method === 'GET') {
     try {
-      const queryRes = await fetch(`${SUPABASE_REST}/homes?select=*&order=createdAt.desc`, {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      });
+      const [queryRes, usersRes] = await Promise.all([
+        fetch(`${SUPABASE_REST}/homes?select=*&order=createdAt.desc`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        }),
+        fetch(`${SUPABASE_REST}/users?select=*`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        })
+      ]);
 
       if (queryRes.ok) {
         const allHomes = await queryRes.json();
-        // Return homes where user is a member or admin, or return all homes for user workspace
-        const userHomes = (allHomes || []).filter(h => {
+        const allUsers = usersRes.ok ? await usersRes.json() : [];
+
+        // Return homes where user is a member or admin
+        const matchingHomes = (allHomes || []).filter(h => {
           if (!authUserId || authUserId === 'usr_me') return true;
-          return h.adminId === authUserId || (Array.isArray(h.members) && h.members.includes(authUserId));
+          return h.adminId === authUserId || 
+                 (Array.isArray(h.members) && h.members.includes(authUserId)) ||
+                 (authUserEmail && Array.isArray(h.members) && h.members.includes(authUserEmail));
         });
-        return res.status(200).json(userHomes.length > 0 ? userHomes : (allHomes || []));
+
+        const targets = matchingHomes.length > 0 ? matchingHomes : (allHomes || []);
+        const populatedHomes = await Promise.all(targets.map(h => populateHomeMembers(h, allUsers)));
+
+        return res.status(200).json(populatedHomes);
       }
     } catch (err) {
       console.warn('Supabase homes fetch error:', err.message);

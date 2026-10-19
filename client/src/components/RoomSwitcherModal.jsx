@@ -29,8 +29,50 @@ export default function RoomSwitcherModal({
 }) {
   const [tab, setTab] = useState('list'); // 'list' | 'create' | 'join'
   const [copiedCode, setCopiedCode] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   if (!isOpen) return null;
+
+  const onTabChange = (newTab) => {
+    setTab(newTab);
+    setErrorMsg(null);
+  };
+
+  const handleValidateCreate = (e) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    const cleanName = homeForm?.name?.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setErrorMsg('Room name is required and must be at least 2 characters.');
+      return;
+    }
+    if (cleanName.length > 50) {
+      setErrorMsg('Room name must not exceed 50 characters.');
+      return;
+    }
+    if (homes && homes.some(h => h.name?.toLowerCase() === cleanName.toLowerCase())) {
+      setErrorMsg(`You already have a room named "${cleanName}"! Please choose a unique name.`);
+      return;
+    }
+    handleCreateHome(e);
+    onClose();
+  };
+
+  const handleValidateJoin = (e) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    const cleanCode = joinCode?.trim()?.toUpperCase();
+    if (!cleanCode || cleanCode.length < 3) {
+      setErrorMsg('Please enter a valid room invite code (at least 3 characters).');
+      return;
+    }
+    if (homes && homes.some(h => (h.inviteCode?.toUpperCase() === cleanCode || h.joinCode?.toUpperCase() === cleanCode))) {
+      setErrorMsg('You have already joined this room! Check your active rooms list.');
+      return;
+    }
+    handleJoinHome(e);
+    onClose();
+  };
 
   const handleCopy = (code) => {
     if (!code) return;
@@ -97,7 +139,7 @@ export default function RoomSwitcherModal({
         {/* Action Toggle Navigation */}
         <div className="flex border-b-4 border-[#121212] bg-[#F8F8F8] p-2 gap-2 text-xs font-black uppercase overflow-x-auto">
           <button
-            onClick={() => setTab('list')}
+            onClick={() => onTabChange('list')}
             className={`px-3 py-1.5 border-2 border-[#121212] cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'list'
                 ? 'bg-[#1040C0] text-white shadow-[2px_2px_0px_0px_#121212]'
@@ -109,7 +151,7 @@ export default function RoomSwitcherModal({
           </button>
 
           <button
-            onClick={() => setTab('create')}
+            onClick={() => onTabChange('create')}
             className={`px-3 py-1.5 border-2 border-[#121212] cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'create'
                 ? 'bg-[#D02020] text-white shadow-[2px_2px_0px_0px_#121212]'
@@ -121,7 +163,7 @@ export default function RoomSwitcherModal({
           </button>
 
           <button
-            onClick={() => setTab('join')}
+            onClick={() => onTabChange('join')}
             className={`px-3 py-1.5 border-2 border-[#121212] cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'join'
                 ? 'bg-[#F0C020] text-[#121212] shadow-[2px_2px_0px_0px_#121212]'
@@ -135,6 +177,12 @@ export default function RoomSwitcherModal({
 
         {/* Modal Body */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 bg-[#F5F5F5]">
+          {errorMsg && (
+            <div className="bg-[#D02020] text-white border-2 border-[#121212] p-3 text-xs font-black uppercase shadow-[2px_2px_0px_0px_#121212] flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{errorMsg}</span>
+            </div>
+          )}
           
           {/* TAB 1: ALL ROOMS LIST */}
           {tab === 'list' && (
@@ -266,10 +314,7 @@ export default function RoomSwitcherModal({
                 </p>
               </div>
 
-              <form onSubmit={(e) => {
-                handleCreateHome(e);
-                onClose();
-              }} className="space-y-4">
+              <form onSubmit={handleValidateCreate} className="space-y-4">
                 <div>
                   <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-[#121212]">
                     ROOM / FLAT NAME *
@@ -319,10 +364,7 @@ export default function RoomSwitcherModal({
                 </p>
               </div>
 
-              <form onSubmit={(e) => {
-                handleJoinHome(e);
-                onClose();
-              }} className="space-y-4">
+              <form onSubmit={handleValidateJoin} className="space-y-4">
                 <div>
                   <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-[#121212]">
                     ROOM INVITE CODE *

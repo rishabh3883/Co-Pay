@@ -41,6 +41,7 @@ export default function ProfileSettings({
   const [budget, setBudget] = useState(userBudgetInput || user?.personalBudget || '15000');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [profileError, setProfileError] = useState(null);
 
   useEffect(() => {
     if (user?.name) setName(user.name);
@@ -52,18 +53,58 @@ export default function ProfileSettings({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setProfileError(null);
     if (!handleUpdateProfile) return;
 
+    const cleanName = name.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setProfileError('Display Name must be at least 2 characters long.');
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        setProfileError('Please enter a valid email address (e.g. name@gmail.com).');
+        return;
+      }
+    }
+
+    const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+    if (cleanPhone) {
+      const phoneDigits = cleanPhone.replace(/^\+91/, '');
+      if (!/^\d{10}$/.test(phoneDigits)) {
+        setProfileError('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+    }
+
+    const cleanUpi = upiId.trim();
+    if (cleanUpi) {
+      if (!cleanUpi.includes('@') || cleanUpi.length < 4) {
+        setProfileError('Please enter a valid UPI ID (e.g. mobile@upi or name@okaxis).');
+        return;
+      }
+    }
+
+    const numBudget = Number(budget);
+    if (isNaN(numBudget) || numBudget <= 0) {
+      setProfileError('Personal monthly budget must be greater than ₹0.');
+      return;
+    }
+
     const res = await handleUpdateProfile({
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      upiId: upiId.trim(),
-      personalBudget: Number(budget) || 15000
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      upiId: cleanUpi,
+      personalBudget: numBudget
     });
 
     if (res?.success) {
       setSavedSuccess(true);
+      setProfileError(null);
       setTimeout(() => setSavedSuccess(false), 4000);
       confetti({ particleCount: 50, spread: 60 });
     }
@@ -131,6 +172,21 @@ export default function ProfileSettings({
           </div>
           <button 
             onClick={() => setSavedSuccess(false)}
+            className="bg-white text-[#121212] border-2 border-[#121212] px-2 py-0.5 text-2xs cursor-pointer shadow-[2px_2px_0px_0px_#121212]"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
+
+      {profileError && (
+        <div className="bg-[#D02020] text-white border-3 border-[#121212] p-4 font-black text-xs uppercase tracking-wider shadow-[4px_4px_0px_0px_#121212] flex items-center justify-between animate-in fade-in zoom-in duration-150">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{profileError}</span>
+          </div>
+          <button 
+            onClick={() => setProfileError(null)}
             className="bg-white text-[#121212] border-2 border-[#121212] px-2 py-0.5 text-2xs cursor-pointer shadow-[2px_2px_0px_0px_#121212]"
           >
             DISMISS
