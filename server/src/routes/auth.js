@@ -53,12 +53,22 @@ router.post('/login', async (req, res) => {
 
     const user = await dbStore.findUserByEmail(email);
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
+      return res.status(404).json({ message: 'Account not found! This email is not registered yet. Please register first.' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    let isMatch = false;
+    if (user.passwordHash && user.passwordHash.startsWith('$2')) {
+      try {
+        isMatch = await bcrypt.compare(password, user.passwordHash);
+      } catch (_) {
+        isMatch = false;
+      }
+    } else {
+      isMatch = user.passwordHash === password;
+    }
+
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: 'Incorrect password! Please check your credentials.' });
     }
 
     // Increment streaks on login
