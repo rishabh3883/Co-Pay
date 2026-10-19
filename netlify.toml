@@ -1,0 +1,39 @@
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm run build"
+
+[functions]
+  directory = "../netlify/functions"
+
+# API Route redirects to Netlify Serverless Functions
+[[redirects]]
+  from = "/api/auth/login"
+  to = "/.netlify/functions/login"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/register"
+  to = "/.netlify/functions/register"
+  status = 200
+
+[[redirects]]
+  from = "/api/homes/join"
+  to = "/.netlify/functions/join"
+  status = 200
+
+[[redirects]]
+  from = "/api/homes"
+  to = "/.netlify/functions/homes"
+  status = 200
+
+[[redirects]]
+  from = "/api/homes/*"
+  to = "/.netlify/functions/homes"
+  status = 200
+
+# Catch-all redirect for Single Page Application (SPA) routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
