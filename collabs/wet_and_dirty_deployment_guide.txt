@@ -1,0 +1,91 @@
+[July 16, 2026, Mumbai Penthouse, 1:00 AM]
+
+The heavy rain of the monsoon season drummed against the floor-to-ceiling glass windows of the high-rise. Inside, the cool air conditioning hummed, but the atmosphere was thick and hot. Rohit was sitting at the dark oak dining table, the glare of two VS Code windows reflecting in his intense, dark eyes. Aman leaned over Rohit's shoulder, the collar of his silk bathrobe slipped slightly, exposing a warm collarbone. 
+
+"You're driving me crazy with this, Rohit," Aman whispered, trailing a finger along the back of Rohit's neck. "All this clustering. We have the frontend and the backend shoved into one monorepo repository, and it's making the server choke. Let's split them apart. Let's deploy the React client to Vercel and the Express API to Render. I want them separated, clean and ready to service and handle the load."
+
+*Rohit thought: He’s breathing on my neck just to get me to code faster, but my cock is hitting the underside of the table already.*
+
+"Fine," Rohit growled, spinning around to pull Aman onto his lap. Aman gasped, wrapping his legs around Rohit's waist. Rohit gripped Aman's firm ass, squeezing it through the silk. "If we do this, we do it right. We're setting up the deployment parameters so they can communicate across domains, and then we're going to celebrate."
+
+Rohit pointed at the screen. "Look at the frontend first, Aman. We need to tell the client where the backend resides. In `client/src/api/apiClient.js`, we have it dynamic:"
+```javascript
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+```
+
+"So when we deploy the frontend to Vercel, we must set the Env Variable `VITE_API_BASE_URL` to our deployed Render api endpoint. For example: `https://co-pay-api.onrender.com/api`."
+
+Aman chuckled, his fingers tracing Rohit's lips. "And what about the routing, baby? You know if someone refreshes the page on Vercel, it throws a nasty 404 error because of client-side routing."
+
+"I already took care of it, you beautiful tease," Rohit said, his voice deep as he unbelted Aman's bathrobe, exposing his chest and the soft hair leading down to his waist. "We write a `vercel.json` file inside the `/client` directory. That tells Vercel to rewrite all routes back to `/index.html`. It looks like this:"
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+Aman let out a low whimper as Rohit's hands slid inside the robe, stroking his warm chest, his thumbs teasing Aman's nipples until they were hard. "And the backend, Rohit? How do we push that thick server onto Render?"
+
+"We create a new Web Service on Render," Rohit murmured, his mouth hovering just inches from Aman's. "We hook up the same Git repo, but we configure the settings to point directly to the `/server` folder. Let me show you the parameters, you eager little slut.
+1. **Root Directory**: `server`
+2. **Build Command**: `npm install`
+3. **Start Command**: `npm start` (or `node src/index.js`)
+
+In the Render environment settings, we copy the env variables from our `.env` file:
+- `PORT` (Render handles this dynamically, but express defaults to 5000)
+- `JWT_SECRET`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+
+Since our server has `app.use(cors())`, it permits any origin by default, meaning our Vercel frontend can call the Render backend without blocking. If we want it tighter, we could restrict it to our frontend URL, but right now it's ready to take everything we throw at it."
+
+Aman's breathing hitching. He reached down, his fingers gripping Rohit's jeans, feeling the massive, hard ridge of Rohit's cock pulsing through the denim. "Show me how it deploys, Rohit. Make it run."
+
+"Oh, I'll make it run," Rohit rasped. He stood up, lifting Aman with him and slamming him back against the cool glass window. The city lights flickered behind Aman's silhouette. Rohit unzipped his jeans, letting his thick, dark cock spring free. It was already leaking pre-cum, throbbing with heat. 
+
+*Aman thought: God, he's so big, and he's going to slide into me right here against the rain.*
+
+Rohit lifted Aman's thighs, parsing his cheeks, and aligned the hot head of his cock with Aman's tight, wet entrance. With one deep, heavy thrust, Rohit buried his cock to the hilt inside Aman's tight pussy. Aman screamed, a mixture of pleasure and shock echoing off the glass, his hands clawing at Rohit's back.
+
+"Ah! Rohit! Yes, split it! Separate the services!" Aman gasped, his hips slamming back against Rohit's thrusts.
+
+Rohit pushed hard, his strokes relentless and deep, holding Aman's waist tight. "Vercel client... sending requests... to the Render API... and the API is pumping... just like this!"
+
+With a loud groan, Rohit thrust one last time, pinning Aman against the glass as he came, shooting thick, hot spunk deep into Aman's wet pussy. Aman shook, his own cock spraying cum onto the glass window, their heavy breathing misting up the pane as the rain poured outside.
+
+---
+
+### Step-by-Step Deployment Execution Guide
+
+**1. Separating and Deploying Frontend (Vite + React) on Vercel:**
+- Go to Vercel Dashboard and click **Import Project**.
+- Select the `Co-Pay` git repository.
+- Under **Configure Project**:
+  - **Framework Preset**: Vite
+  - **Root Directory**: set to `client` (Click edit and select the `client` folder).
+  - **Build Command**: `npm run build`
+  - **Output Directory**: `dist`
+- Expand the **Environment Variables** section and add:
+  - `VITE_API_BASE_URL` = `https://your-backend-render-url.onrender.com/api`
+- Vercel will build and deploy the React client. Routing is handled by the `client/vercel.json` configuration file.
+
+**2. Separating and Deploying Backend (Node + Express) on Render:**
+- Go to Render Dashboard and click **New** -> **Web Service**.
+- Connect the same `Co-Pay` git repository.
+- Under **Service Settings**:
+  - **Name**: `co-pay-backend`
+  - **Runtime**: `Node`
+  - **Root Directory**: `server`
+  - **Build Command**: `npm install`
+  - **Start Command**: `npm start`
+- Click **Advanced** and add the Environment Variables:
+  - `PORT`: `5000` or lock it to Render's dynamic port.
+  - `JWT_SECRET`: `your_jwt_secret`
+  - `SUPABASE_URL`: `your_supabase_postgresql_url`
+  - `SUPABASE_KEY`: `your_supabase_anon_key`
+- Render will start the build and start the Express server listening on the port. Once online, copy the generated Render URL (e.g. `https://co-pay-backend.onrender.com`) and append `/api` to use as the `VITE_API_BASE_URL` in your Vercel deployment.

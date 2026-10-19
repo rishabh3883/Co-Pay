@@ -36,9 +36,15 @@ export default function Navbar({
 
       {/* Left Side: Brand Logo & Workspace Switcher */}
       <div className="flex items-center justify-between w-full md:w-auto gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#00ea64] text-[#06090e] flex items-center justify-center font-black shadow-md shadow-[#00ea64]/20 text-xs font-mono">
+            {'>_'}
+          </div>
           <span className="text-xl font-black text-white tracking-tight font-sans">
-            Co-Pay<span className="text-emerald-400 font-black">.</span>
+            Co-Pay<span className="text-[#00ea64] font-black">_</span>
+          </span>
+          <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-[#00ea64]/10 text-[#00ea64] border border-[#00ea64]/20 uppercase">
+            SaaS v2.4
           </span>
         </div>
 

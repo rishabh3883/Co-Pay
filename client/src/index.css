@@ -2,90 +2,82 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    color-scheme: light dark;
+    --background: 0 0% 94%;
+    --foreground: 0 0% 7%;
   }
 
   body {
-    background-color: #040714;
-    background-image:
-      radial-gradient(at 0% 0%, rgba(20, 24, 48, 0.4) 0px, transparent 50%),
-      radial-gradient(at 50% 0%, rgba(13, 20, 36, 0.5) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(26, 17, 43, 0.4) 0px, transparent 50%);
-    background-attachment: fixed;
-    color: #e2e8f0;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #F0F0F0;
+    color: #121212;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     margin: 0;
   }
 }
 
-/* Custom Scrollbar for visual excellence */
+/* Custom Scrollbar in Bauhaus High Contrast */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #02040b;
+  background: #F0F0F0;
+  border-left: 2px solid #121212;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #111827;
-  border-radius: 4px;
+  background: #121212;
+  border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1f2937;
+  background: #D02020;
 }
 
-/* Dynamic background color transition for screen wrapper */
+/* Screen Wrapper */
 .min-h-screen {
-  background-color: #0b0914;
-  transition: background-color 0.3s ease;
+  background-color: #F0F0F0;
+  transition: background-color 0.2s ease;
 }
 
-.light-mode.min-h-screen,
-.light-mode .min-h-screen {
-  background-color: #ffffff !important;
-}
-
-/* Glassmorphic custom classes for navy base */
+/* Bauhaus Architectural Panels (Replaces legacy glassmorphism) */
 .glass-panel {
-  background: rgba(8, 12, 28, 0.72) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 4px solid #121212 !important;
+  box-shadow: 6px 6px 0px 0px #121212 !important;
+  border-radius: 0px !important;
 }
 
 .glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease-out;
 }
 
 .glass-panel-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+  transform: translate(-2px, -2px) !important;
+  border-color: #121212 !important;
+  box-shadow: 8px 8px 0px 0px #121212 !important;
 }
 
-.neon-border-emerald {
-  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.2);
-}
-
+.neon-border-emerald,
 .neon-border-purple {
-  box-shadow: 0 0 15px -3px rgba(139, 92, 246, 0.2);
+  box-shadow: 6px 6px 0px 0px #121212 !important;
+  border: 4px solid #121212 !important;
 }
 
 /* Contribution Cell animation */
 .heatmap-cell {
   transition: transform 0.15s ease;
+  border-radius: 0px !important;
 }
 
 .heatmap-cell:hover {
-  transform: scale(1.25);
+  transform: scale(1.3);
   z-index: 10;
+  outline: 2px solid #121212;
 }
 
 /* Light mode theme style overrides */
@@ -95,256 +87,252 @@
   background-image: none !important;
 }
 
-.light-mode.min-h-screen,
-.light-mode .min-h-screen {
-  background-color: #ffffff !important;
+/* ═══════════════════════════════════════════════════════════════
+   UNIVERSAL BAUHAUS THEME OVERRIDES (POST-LOGIN INNER DASHBOARD)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Text hierarchy */
+h1, h2, h3, h4, .font-black {
+  color: #121212 !important;
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Force high contrast text on light canvas */
+.text-white, .text-gray-100, .text-gray-200, .text-gray-300 {
+  color: #121212 !important;
+}
+
+.text-gray-400, .text-gray-500, .text-gray-600 {
+  color: #404040 !important;
+}
+
+/* Primary color mappings */
+.text-emerald-400, .text-emerald-500, .text-emerald-300 {
+  color: #1040C0 !important; /* Bauhaus Blue */
+  font-weight: 700 !important;
+}
+
+.text-purple-400, .text-purple-500, .text-purple-300, .text-indigo-400 {
+  color: #D02020 !important; /* Bauhaus Red */
+  font-weight: 700 !important;
+}
+
+.text-amber-400, .text-amber-500, .text-amber-300 {
+  color: #B28500 !important; /* Bauhaus Yellow dark */
+  font-weight: 700 !important;
+}
+
+/* Background elements & Containers */
+.bg-gray-900, 
+.bg-gray-950, 
+.bg-gray-850, 
+.bg-gray-855,
+.bg-gray-805,
+.bg-gray-955, 
+.bg-\[\#0b0914\], 
+.bg-\[\#040714\],
+.bg-\[\#07090f\],
+.bg-\[\#090812\],
+.bg-\[\#0d0a1a\],
+.bg-\[\#1e293b\],
+.bg-\[\#0b0f19\],
+.bg-purple-950\/20,
+.bg-purple-950\/30,
+.bg-emerald-950\/60 {
+  background-color: #FFFFFF !important;
+  border-color: #121212 !important;
+  color: #121212 !important;
+}
+
+.bg-gray-900\/60, 
+.bg-gray-950\/30, 
+.bg-gray-950\/40, 
+.bg-gray-950\/60, 
+.bg-gray-900\/30,
+.bg-white\/\[0\.03\], 
+.bg-white\/\[0\.04\],
+.bg-white\/\[0\.02\],
+.bg-white\/5,
+.bg-black\/25,
+.bg-black\/50 {
+  background-color: #F8F8F8 !important;
+  border-color: #121212 !important;
+  color: #121212 !important;
+}
+
+/* Inputs, Selects, and Textareas */
+input, select, textarea {
+  background-color: #FFFFFF !important;
+  color: #121212 !important;
+  border: 3px solid #121212 !important;
+  border-radius: 0px !important;
+  font-weight: 700 !important;
+  box-shadow: 3px 3px 0px 0px #121212 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: #D02020 !important;
+  box-shadow: 4px 4px 0px 0px #121212 !important;
+}
+
+input::placeholder {
+  color: #737373 !important;
+  text-transform: uppercase !important;
+  font-size: 0.85em !important;
+}
+
+/* Primary Action Buttons */
+button.bg-emerald-600, 
+button.bg-emerald-500,
+button.bg-gradient-to-r,
+.bg-emerald-600,
+.bg-emerald-500 {
+  background-color: #D02020 !important; /* Bauhaus Red */
   background-image: none !important;
+  color: #FFFFFF !important;
+  border: 3px solid #121212 !important;
+  box-shadow: 4px 4px 0px 0px #121212 !important;
+  border-radius: 0px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
 }
 
-
-.light-mode .glass-panel {
-  background: rgba(245, 243, 255, 0.52) !important;
-  border: 1px solid rgba(168, 85, 247, 0.12) !important;
-  box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.06) !important;
+button.bg-purple-600, 
+button.bg-indigo-600 {
+  background-color: #1040C0 !important; /* Bauhaus Blue */
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 3px solid #121212 !important;
+  box-shadow: 4px 4px 0px 0px #121212 !important;
+  border-radius: 0px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
 }
 
-.light-mode text-white,
-.light-mode .text-white,
-.light-mode .text-gray-100 {
-  color: #0f172a !important;
+button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 0px 0px 0px 0px #121212 !important;
 }
 
-.light-mode .text-gray-200,
-.light-mode .text-gray-300,
-.light-mode .text-gray-400 {
-  color: #334155 !important;
+/* Borders */
+.border-gray-800, .border-gray-850, .border-gray-900, .border-white\/\[0\.06\], .border-white\/\[0\.08\], .border-white\/5 {
+  border-color: #121212 !important;
 }
 
-.light-mode .text-gray-500 {
-  color: #64748b !important;
+/* Tables in Bauhaus format */
+table {
+  border: 3px solid #121212 !important;
+  border-collapse: collapse !important;
+  background-color: #FFFFFF !important;
+  border-radius: 0px !important;
 }
 
-.light-mode .bg-gray-900,
-.light-mode .bg-gray-955,
-.light-mode .bg-gray-950\/30,
-.light-mode .bg-gray-950\/40,
-.light-mode .bg-gray-950\/60 {
-  background-color: #f8fafc !important;
+th {
+  background-color: #121212 !important;
+  color: #FFFFFF !important;
+  text-transform: uppercase !important;
+  font-weight: 900 !important;
+  border-bottom: 3px solid #121212 !important;
 }
 
-.light-mode .bg-gray-900\/30 {
-  background-color: rgba(255, 255, 255, 0.45) !important;
+tr {
+  border-bottom: 2px solid #121212 !important;
 }
 
-.light-mode .bg-gray-950 {
-  background-color: #f1f5f9 !important;
+tr:hover {
+  background-color: #FFF9C4 !important; /* Light Bauhaus Yellow hover */
 }
 
-.light-mode .border-gray-800,
-.light-mode .border-gray-850,
-.light-mode .border-gray-855 {
-  border-color: #e2e8f0 !important;
+td {
+  color: #121212 !important;
+  font-weight: 600 !important;
 }
 
-.light-mode input,
-.light-mode select,
-.light-mode textarea {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
+/* Recharts / Analytics Text */
+.recharts-text {
+  fill: #121212 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 700 !important;
 }
 
-.light-mode input::placeholder {
-  color: #94a3b8 !important;
+.recharts-cartesian-grid line {
+  stroke: #121212 !important;
+  stroke-dasharray: 2 2 !important;
+  opacity: 0.35 !important;
 }
 
-.light-mode tr {
-  border-bottom-color: #e2e8f0 !important;
+/* Badges & Pills */
+span.rounded-full, div.rounded-full {
+  border-radius: 9999px !important;
 }
 
-.light-mode tr:hover {
-  background-color: rgba(15, 23, 42, 0.015) !important;
+/* Hard corner defaults for cards & widgets */
+div.rounded-2xl, div.rounded-xl, div.rounded-3xl, div.rounded-lg {
+  border-radius: 0px !important;
 }
 
-.light-mode .recharts-text {
-  fill: #334155 !important;
+/* Chat Bubbles in Flatmate Messenger */
+.rounded-tl-sm {
+  background-color: #FFFFFF !important;
+  color: #121212 !important;
+  border: 3px solid #121212 !important;
+  box-shadow: 4px 4px 0px 0px #121212 !important;
+  border-radius: 0px !important;
 }
 
-.light-mode .bg-gray-800 {
-  background-color: #e2e8f0 !important;
-  color: #0f172a !important;
+.rounded-tr-sm {
+  background-color: #1040C0 !important; /* Blue for user sent bubbles */
+  color: #FFFFFF !important;
+  border: 3px solid #121212 !important;
+  box-shadow: 4px 4px 0px 0px #121212 !important;
+  border-radius: 0px !important;
 }
 
-.light-mode .bg-gray-800:hover {
-  background-color: #cbd5e1 !important;
+.rounded-tr-sm p, .rounded-tr-sm span {
+  color: #FFFFFF !important;
 }
 
-.light-mode .bg-gray-850,
-.light-mode .bg-gray-955 {
-  background-color: #f1f5f9 !important;
+/* ═══════════════════════════════════════════════════════════════
+   BAUHAUS DESIGN SYSTEM UTILITIES & TOKENS (1920s CONSTRUCTIVISM)
+   ═══════════════════════════════════════════════════════════════ */
+.font-bauhaus {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-.light-mode .text-indigo-400 {
-  color: #4f46e5 !important;
+.bauhaus-shadow-sm {
+  box-shadow: 4px 4px 0px 0px #121212 !important;
 }
 
-.light-mode .text-emerald-400 {
-  color: #059669 !important;
+.bauhaus-shadow-md {
+  box-shadow: 6px 6px 0px 0px #121212 !important;
 }
 
-.light-mode .text-purple-400 {
-  color: #7c3aed !important;
+.bauhaus-shadow-lg {
+  box-shadow: 8px 8px 0px 0px #121212 !important;
 }
 
-.light-mode .text-purple-300 {
-  color: #6d28d9 !important;
+.bauhaus-shadow-white {
+  box-shadow: 6px 6px 0px 0px #ffffff !important;
 }
 
-.light-mode .text-emerald-300 {
-  color: #047857 !important;
+.bauhaus-btn-press:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 0px 0px 0px 0px #121212 !important;
 }
 
-.light-mode .text-indigo-300 {
-  color: #4338ca !important;
+.bauhaus-dot-pattern {
+  background-image: radial-gradient(#121212 1.5px, transparent 1.5px);
+  background-size: 16px 16px;
 }
 
-.light-mode .text-amber-300 {
-  color: #b45309 !important;
+.bauhaus-dot-pattern-light {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px);
+  background-size: 16px 16px;
 }
 
-.light-mode .bg-purple-950\/30 {
-  background-color: rgba(139, 92, 246, 0.12) !important;
-}
-
-.light-mode .bg-purple-950\/60 {
-  background-color: rgba(139, 92, 246, 0.18) !important;
-}
-
-.light-mode .bg-emerald-950\/30 {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-}
-
-.light-mode .bg-indigo-950\/30 {
-  background-color: rgba(99, 102, 241, 0.12) !important;
-}
-
-.light-mode .bg-amber-950\/30 {
-  background-color: rgba(245, 158, 11, 0.12) !important;
-}
-
-/* Light mode header and navbar overrides */
-.light-mode header {
-  background-color: rgba(245, 243, 255, 0.35) !important;
-  border-bottom-color: rgba(168, 85, 247, 0.10) !important;
-}
-
-.light-mode header span.text-xl,
-.light-mode header span.text-xl span,
-.light-mode header select,
-.light-mode header select option,
-.light-mode header nav button,
-.light-mode header span.text-2xs,
-.light-mode header button {
-  color: #000000 !important;
-}
-
-/* Make switcher dropdown and navigation pills gorgeous in light mode */
-.light-mode header select {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  border-color: rgba(168, 85, 247, 0.20) !important;
-}
-
-.light-mode header select option {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-
-.light-mode header nav {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-  border-color: rgba(168, 85, 247, 0.15) !important;
-}
-
-.light-mode header nav button {
-  color: #374151 !important;
-  /* dark gray for inactive */
-}
-
-.light-mode header nav button:hover {
-  color: #000000 !important;
-}
-
-.light-mode header nav button:not(.text-gray-400) {
-  background-color: #ffffff !important;
-  border-color: rgba(168, 85, 247, 0.25) !important;
-  color: #000000 !important;
-  box-shadow: 0 4px 12px -2px rgba(168, 85, 247, 0.12) !important;
-}
-
-/* User profile capsule */
-.light-mode header .bg-white\/\[0\.03\],
-.light-mode header .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.5) !important;
-  border-color: rgba(168, 85, 247, 0.15) !important;
-}
-
-/* AI Highlight Panel Styles */
-.ai-card-highlight {
-  border: 1px solid rgba(168, 85, 247, 0.28) !important;
-  box-shadow: 0 10px 30px -5px rgba(168, 85, 247, 0.15) !important;
-}
-
-.light-mode .ai-card-highlight {
-  background: rgba(243, 232, 255, 0.45) !important;
-  border: 1.5px solid rgba(147, 51, 234, 0.42) !important;
-  box-shadow: 0 12px 32px -8px rgba(147, 51, 234, 0.22) !important;
-}
-
-/* Chat bubble styling overrides for light-mode */
-.light-mode .rounded-tl-sm {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-  border-color: #e2e8f0 !important;
-}
-
-.light-mode .rounded-tl-sm p {
-  color: #0f172a !important;
-}
-
-.light-mode .rounded-tr-sm {
-  background-color: #7c3aed !important;
-  color: #ffffff !important;
-  border-color: #6d28d9 !important;
-}
-
-.light-mode .rounded-tr-sm p {
-  color: #ffffff !important;
-}
-
-.light-mode .rounded-tr-sm span {
-  color: #ffffff !important;
-  opacity: 0.65 !important;
-}
-
-/* Chat Input and Status Header overrides */
-.light-mode .bg-\[\#040714\]\/30 {
-  background-color: #f8fafc !important;
-  border-top-color: #e2e8f0 !important;
-}
-
-.light-mode .bg-emerald-950\/40 {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-}
-
-.light-mode .bg-purple-900\/40 {
-  background-color: rgba(139, 92, 246, 0.12) !important;
-}
-
-/* Light mode footer overrides */
-.light-mode footer {
-  background-color: #ffffff !important;
-  border-top-color: #e2e8f0 !important;
-}
-
-.light-mode footer p {
-  color: #64748b !important;
+.bauhaus-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }

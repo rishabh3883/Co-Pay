@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Monorepo startup runner for Co-Pay",
   "scripts": {
+    "build": "cd client && npm install && npm run build",
     "install-all": "npm install --prefix server && npm install --prefix client --legacy-peer-deps",
     "start": "start cmd /k \"npm run dev --prefix server\" && start cmd /k \"npm run dev --prefix client\""
   }

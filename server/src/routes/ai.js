@@ -240,4 +240,80 @@ router.post('/voice-parse', authMiddleware, async (req, res) => {
   }
 });
 
+// AI Receipt OCR / text parsing & 3-way member distribution helper
+router.post('/scan-receipt', authMiddleware, async (req, res) => {
+  try {
+    const { text, homeId, receiptImage } = req.body;
+    const cleanText = (text || '').toLowerCase();
+
+    // 1. Extract Amount
+    let amount = 0;
+    const totalRegex = /(?:total|grand\s*total|net\s*amount|net\s*payable|sub\s*total|balance\s*due|amount\s*paid)\s*[:=\-]?\s*(?:rs\.?|₹|inr)?\s*(\d{1,6}(?:\.\d{1,2})?)/i;
+    const totalMatch = (text || '').match(totalRegex);
+
+    if (totalMatch) {
+      amount = parseFloat(totalMatch[1]);
+    } else {
+      // Standalone currency pattern
+      const currRegex = /(?:₹|rs\.?|inr)\s*(\d{1,6}(?:\.\d{1,2})?)/i;
+      const currMatch = (text || '').match(currRegex);
+      if (currMatch) {
+        amount = parseFloat(currMatch[1]);
+      }
+    }
+
+    // 2. Extract Category
+    let category = 'Shared';
+    if (cleanText.includes('grocer') || cleanText.includes('mart') || cleanText.includes('milk') || cleanText.includes('vegetable') || cleanText.includes('oil')) {
+      category = 'Grocery';
+    } else if (cleanText.includes('food') || cleanText.includes('restaurant') || cleanText.includes('pizza') || cleanText.includes('burger') || cleanText.includes('dinner')) {
+      category = 'Food';
+    } else if (cleanText.includes('electr') || cleanText.includes('power') || cleanText.includes('bescom') || cleanText.includes('bses')) {
+      category = 'Electricity';
+    } else if (cleanText.includes('internet') || cleanText.includes('wifi') || cleanText.includes('broadband')) {
+      category = 'Internet';
+    } else if (cleanText.includes('pharmacy') || cleanText.includes('medicine') || cleanText.includes('chemist') || cleanText.includes('apollo')) {
+      category = 'Medicine';
+    }
+
+    // 3. Extract Title
+    let title = 'Scanned Receipt';
+    const lines = (text || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length > 0 && lines[0].length < 40) {
+      title = lines[0].replace(/[^\w\s&'-]/g, '').trim() || 'Store Receipt';
+    }
+
+    // 4. Divide across 3 members or all workspace members
+    let memberCount = 3;
+    let members = [];
+    if (homeId) {
+      const home = await dbStore.findHomeById(homeId);
+      if (home && home.members && home.members.length > 0) {
+        memberCount = home.members.length;
+        for (const mId of home.members) {
+          const u = await dbStore.findUserById(mId);
+          if (u) members.push({ id: u.id, name: u.name });
+        }
+      }
+    }
+
+    const sharePerMember = Math.round((amount / (memberCount || 1)) * 100) / 100;
+
+    return res.json({
+      title,
+      amount,
+      category,
+      date: new Date().toISOString().split('T')[0],
+      memberCount,
+      sharePerMember,
+      members,
+      receiptImage: receiptImage || null,
+      notes: `Scanned receipt bill of ₹${amount} divided into ${memberCount} equal parts (₹${sharePerMember} per roommate).`
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
+
