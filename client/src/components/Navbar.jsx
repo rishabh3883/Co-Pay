@@ -22,7 +22,7 @@ export default function Navbar({
 }) {
   const tabs = [
     { id: 'personal', label: 'Personal' },
-    { id: 'shared', label: 'Shared Ledger' },
+    { id: 'shared', label: 'Room Expenses' },
     { id: 'balances', label: 'Balances' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'calculations', label: 'Calculations' },

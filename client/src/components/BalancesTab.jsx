@@ -102,7 +102,7 @@ export default function BalancesTab(props) {
                         <div className="p-3 bg-emerald-600/20 rounded-full mb-3">
                           <Check className="w-6 h-6 text-emerald-400" />
                         </div>
-                        <p className="text-sm font-bold">Workspace ledger is balanced</p>
+                        <p className="text-sm font-bold">Room expenses are balanced</p>
                         <p className="text-3xs text-gray-500 max-w-xs mt-1 leading-normal">
                           Every roommate has contributed exactly their target share. No outstanding transfers.
                         </p>

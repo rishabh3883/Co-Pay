@@ -1280,7 +1280,7 @@ export default function useAppController() {
           loadOfflineFallback();
         }
       }
-      alert(`Receipt for ${title} (₹${numAmount}) distributed among flatmates and saved to shared ledger!`);
+      alert(`Receipt for ${title} (₹${numAmount}) distributed among flatmates and saved to room expenses!`);
     } catch (err) {
       console.error('Error saving scanned receipt expense:', err);
       alert('Could not save scanned receipt: ' + err.message);

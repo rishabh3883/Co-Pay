@@ -169,7 +169,7 @@ export default function AppView() {
           </div>
 
           <h2 className="text-xl font-black uppercase tracking-tight text-[#121212] mb-1">
-            {isRegistering ? 'CREATE NEW ACCOUNT' : 'SIGN IN TO YOUR LEDGER'}
+            {isRegistering ? 'CREATE NEW ACCOUNT' : 'SIGN IN TO ROOM EXPENSES'}
           </h2>
           <p className="text-xs font-bold uppercase text-gray-600 mb-5 tracking-wide">
             {isRegistering 
@@ -329,7 +329,7 @@ export default function AppView() {
                   JOIN EXISTING ROOM
                 </h3>
                 <p className="text-xs font-bold text-gray-600 mt-1 leading-relaxed">
-                  Have an invite code from your flatmates? Enter it below to join their room ledger instantly.
+                  Have an invite code from your flatmates? Enter it below to join their room expenses instantly.
                 </p>
               </div>
 
@@ -375,7 +375,7 @@ export default function AppView() {
                   CREATE NEW ROOM
                 </h3>
                 <p className="text-xs font-bold text-gray-600 mt-1 leading-relaxed">
-                  Moving into a new flat or PG? Set up a fresh room space, configure target budget, and invite flatmates.
+                  Moving into a new flat or PG? Set up a fresh room space and invite flatmates.
                 </p>
               </div>
 
@@ -394,20 +394,6 @@ export default function AppView() {
                   />
                 </div>
 
-                <div>
-                  <label className="text-3xs font-black uppercase tracking-wider block mb-1 text-gray-700">
-                    MONTHLY TARGET BUDGET (₹):
-                  </label>
-                  <input 
-                    type="number" 
-                    required
-                    placeholder="25000" 
-                    value={homeForm.monthlyBudget}
-                    onChange={e => setHomeForm({ ...homeForm, monthlyBudget: e.target.value })}
-                    className="w-full bg-[#F0F0F0] border-3 border-[#121212] p-2.5 text-xs font-mono font-black uppercase placeholder-gray-400 focus:outline-none focus:bg-white shadow-[2px_2px_0px_0px_#121212]"
-                  />
-                </div>
-
                 <button 
                   type="submit"
                   className="w-full bg-[#D02020] hover:bg-[#b01818] text-white border-3 border-[#121212] font-black uppercase text-xs py-3.5 shadow-[4px_4px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
@@ -423,7 +409,7 @@ export default function AppView() {
           {/* Footer banner */}
           <div className="bg-white border-t-4 border-[#121212] p-3.5 text-center">
             <span className="text-3xs font-mono font-black uppercase tracking-widest text-gray-500">
-              CO-PAY · PEER-REVIEWED SHARED FINANCES · SECURED LEDGER ARCHITECTURE
+              CO-PAY · PEER-REVIEWED SHARED FINANCES · SECURED ROOM EXPENSES ARCHITECTURE
             </span>
           </div>
 

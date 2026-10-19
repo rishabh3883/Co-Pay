@@ -56,7 +56,7 @@ export default function CalculationsTab(props) {
                   onClick={() => setCalcTab('shared')}
                   className={`px-4.5 py-1.5 rounded-full text-4xs font-bold uppercase tracking-wider font-mono cursor-pointer transition-all ${calcTab === 'shared' ? 'bg-[#1e293b]/90 text-white border border-white/5 shadow-md' : 'text-gray-400 hover:text-white'}`}
                 >
-                  Shared Ledger
+                  Room Expenses
                 </button>
                 <button 
                   onClick={() => setCalcTab('personal')}

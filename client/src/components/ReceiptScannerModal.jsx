@@ -553,7 +553,7 @@ export default function ReceiptScannerModal({
               {/* Members Distribution Breakdown Cards */}
               <div className="space-y-2 pt-1">
                 <span className="text-4xs font-mono font-black text-gray-500 uppercase tracking-wider block">
-                  ROOMMATE LEDGER IMPACT ({splitCount} INCLUDED IN SPLIT):
+                  ROOM EXPENSES IMPACT ({splitCount} INCLUDED IN SPLIT):
                 </span>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -655,7 +655,7 @@ export default function ReceiptScannerModal({
               >
                 <Check className="w-4 h-4" />
                 <span>
-                  DISTRIBUTE ₹{numAmount ? numAmount.toFixed(2) : '0'} AMONG {splitCount} MEMBERS & POST LEDGER
+                  DISTRIBUTE ₹{numAmount ? numAmount.toFixed(2) : '0'} AMONG {splitCount} MEMBERS & POST TO ROOM EXPENSES
                 </span>
               </button>
             </div>

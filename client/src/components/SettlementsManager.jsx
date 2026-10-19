@@ -36,7 +36,7 @@ export default function SettlementsManager({
   if (!activeHome) {
     return (
       <p className="text-xs text-gray-500 text-center font-mono py-12">
-        Establish or join a workspace from the Shared Ledger tab to view settlements.
+        Establish or join a workspace from the Room Expenses tab to view settlements.
       </p>
     );
   }
@@ -169,7 +169,7 @@ export default function SettlementsManager({
                 <div className="p-3 bg-emerald-600/20 rounded-full mb-3">
                   <Check className="w-6 h-6 text-emerald-400" />
                 </div>
-                <p className="text-sm font-bold">Workspace ledger is balanced</p>
+                <p className="text-sm font-bold">Room expenses are balanced</p>
                 <p className="text-3xs text-gray-500 max-w-xs mt-1 leading-normal">
                   Every roommate has contributed exactly their target share. No outstanding transfers.
                 </p>
@@ -312,7 +312,7 @@ export default function SettlementsManager({
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] text-gray-500 font-mono block uppercase">Shared Ledger Title (e.g. WiFi Router Bill)</label>
+                  <label className="text-[9px] text-gray-500 font-mono block uppercase">Room Expense Title (e.g. WiFi Router Bill)</label>
                   <input
                     type="text"
                     value={templateForm.title}

@@ -104,13 +104,6 @@ export default function SharedTab(props) {
                         onChange={e => setHomeForm({ ...homeForm, name: e.target.value })}
                         className="w-full bg-[#0b0914] border border-gray-800 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors"
                       />
-                      <input 
-                        type="number" 
-                        placeholder="Group Monthly Budget Limit" 
-                        value={homeForm.monthlyBudget}
-                        onChange={e => setHomeForm({ ...homeForm, monthlyBudget: e.target.value })}
-                        className="w-full bg-[#0b0914] border border-gray-800 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                      />
                       <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
                         <Plus className="w-4 h-4" />
                         <span>Create Workspace</span>
@@ -301,7 +294,7 @@ export default function SharedTab(props) {
                         </span>
                       </div>
                       <p className="text-xs text-gray-300 mt-1 max-w-xl">
-                        Upload or capture any receipt/bill &rarr; OCR extracts the total, divides it into 3 equal shares across flatmates, and posts directly to the shared ledger!
+                        Upload or capture any receipt/bill &rarr; OCR extracts the total, divides it into 3 equal shares across flatmates, and posts directly to Room Expenses!
                       </p>
                     </div>
                   </div>
@@ -434,7 +427,7 @@ export default function SharedTab(props) {
                           className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
                         >
                           {editingExpenseId ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                          <span>{editingExpenseId ? 'Save Changes' : 'Post Ledger Node'}</span>
+                          <span>{editingExpenseId ? 'Save Changes' : 'Post Room Expense'}</span>
                         </button>
                         {editingExpenseId && (
                           <button
@@ -469,10 +462,10 @@ export default function SharedTab(props) {
                     </div>
                   </div>
 
-                  {/* Right Column: Ledger Log History Table */}
+                  {/* Right Column: Room Expenses Log History Table */}
                   <div className="glass-panel p-5 rounded-2xl shadow-xl lg:col-span-2 space-y-4">
                     <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                      <h4 className="text-xs font-mono text-gray-400 uppercase tracking-wider">Commit Ledger History</h4>
+                      <h4 className="text-xs font-mono text-gray-400 uppercase tracking-wider">Room Expenses History</h4>
                       
                       <div className="flex gap-1.5">
                         <button 
@@ -632,7 +625,7 @@ export default function SharedTab(props) {
                           {filteredSharedExpenses.length === 0 && (
                             <tr>
                               <td colSpan={6} className="py-8 text-center text-gray-500 font-mono">
-                                No shared ledger entries recorded.
+                                No room expenses recorded.
                               </td>
                             </tr>
                           )}
