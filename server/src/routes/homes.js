@@ -195,4 +195,35 @@ router.put('/:homeId/budget', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete or Leave Room
+router.delete('/:homeId', authMiddleware, async (req, res) => {
+  try {
+    const { homeId } = req.params;
+    const home = await dbStore.findHomeById(homeId);
+    if (!home) {
+      return res.status(404).json({ message: 'Room not found.' });
+    }
+
+    const isCreator = home.adminId === req.userId;
+
+    if (isCreator) {
+      // Room Creator deletes the entire room workspace
+      await dbStore.deleteHome(homeId);
+      return res.json({ success: true, action: 'deleted', message: 'Room successfully deleted.' });
+    } else {
+      // Joined Roommate leaves the room
+      const currentMembers = Array.isArray(home.members) ? home.members : [];
+      const updatedMembers = currentMembers.filter(m => {
+        if (!m) return false;
+        if (typeof m === 'string') return m !== req.userId;
+        return m.id !== req.userId && m._id !== req.userId;
+      });
+      await dbStore.updateHome(homeId, { members: updatedMembers });
+      return res.json({ success: true, action: 'left', message: 'Successfully left the room.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

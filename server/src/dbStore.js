@@ -177,6 +177,29 @@ const dbStore = {
     return list[index];
   },
 
+  async deleteHome(id) {
+    if (dbModule.isSupabaseConnected) {
+      const { error } = await dbModule.supabase
+        .from('homes')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      try {
+        await dbModule.supabase.from('expenses').delete().eq('homeId', id);
+      } catch (_) {}
+      return true;
+    }
+
+    const list = dbModule.jsonDb.read('homes');
+    const filtered = list.filter(h => h.id !== id);
+    dbModule.jsonDb.write('homes', filtered);
+    try {
+      const expList = dbModule.jsonDb.read('expenses');
+      dbModule.jsonDb.write('expenses', expList.filter(e => e.homeId !== id));
+    } catch (_) {}
+    return true;
+  },
+
   async findUserHomes(userId) {
     if (dbModule.isSupabaseConnected) {
       const { data, error } = await dbModule.supabase

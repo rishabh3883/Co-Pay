@@ -198,6 +198,72 @@ exports.handler = async (event) => {
     };
   }
 
+  // DELETE: Delete room (if creator) or Leave room (if joined flatmate)
+  if (event.httpMethod === 'DELETE') {
+    if (!requestedHomeId) {
+      return { statusCode: 400, headers, body: JSON.stringify({ message: 'Room ID required' }) };
+    }
+
+    try {
+      const getRes = await fetch(`${SUPABASE_REST}/homes?id=eq.${requestedHomeId}&select=*`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      });
+      const homes = await getRes.json();
+      if (!homes || homes.length === 0) {
+        return { statusCode: 404, headers, body: JSON.stringify({ message: 'Room not found' }) };
+      }
+
+      const home = homes[0];
+      const isCreator = home.adminId === authUserId;
+
+      if (isCreator) {
+        // Delete entire room
+        await fetch(`${SUPABASE_REST}/homes?id=eq.${requestedHomeId}`, {
+          method: 'DELETE',
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+        });
+        try {
+          await fetch(`${SUPABASE_REST}/expenses?homeId=eq.${requestedHomeId}`, {
+            method: 'DELETE',
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+          });
+        } catch (_) {}
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, action: 'deleted', message: 'Room successfully deleted' })
+        };
+      } else {
+        // Leave room
+        const currentMembers = Array.isArray(home.members) ? home.members : [];
+        const updatedMembers = currentMembers.filter(m => {
+          if (!m) return false;
+          if (typeof m === 'string') return m !== authUserId;
+          return m.id !== authUserId && m._id !== authUserId;
+        });
+
+        await fetch(`${SUPABASE_REST}/homes?id=eq.${requestedHomeId}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ members: updatedMembers })
+        });
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, action: 'left', message: 'Successfully left the room' })
+        };
+      }
+    } catch (err) {
+      return { statusCode: 500, headers, body: JSON.stringify({ message: err.message }) };
+    }
+  }
+
   return {
     statusCode: 405,
     headers,

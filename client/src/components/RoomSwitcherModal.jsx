@@ -10,7 +10,9 @@ import {
   DoorOpen, 
   Sparkles,
   KeyRound,
-  ShieldCheck
+  ShieldCheck,
+  Trash2,
+  LogOut
 } from 'lucide-react';
 
 export default function RoomSwitcherModal({
@@ -26,7 +28,8 @@ export default function RoomSwitcherModal({
   joinCode,
   setJoinCode,
   handleJoinHome,
-  onViewRoommates
+  onViewRoommates,
+  onDeleteHome
 }) {
   const [tab, setTab] = useState('list'); // 'list' | 'create' | 'join'
   const [copiedCode, setCopiedCode] = useState(null);
@@ -302,6 +305,30 @@ export default function RoomSwitcherModal({
                               >
                                 <span>SWITCH</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            {onDeleteHome && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteHome(h.id);
+                                }}
+                                className="bg-white hover:bg-[#D02020] text-[#D02020] hover:text-white border-2 border-[#D02020] hover:border-[#121212] px-2.5 py-1 text-3xs font-black uppercase tracking-wider cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1"
+                                title={isCreated ? 'Delete Room and all expenses' : 'Leave this Room'}
+                              >
+                                {isCreated ? (
+                                  <>
+                                    <Trash2 className="w-3 h-3" />
+                                    <span>DELETE</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <LogOut className="w-3 h-3" />
+                                    <span>LEAVE</span>
+                                  </>
+                                )}
                               </button>
                             )}
                           </div>

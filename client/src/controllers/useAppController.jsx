@@ -864,6 +864,46 @@ export default function useAppController() {
     }
   };
 
+  const handleDeleteHome = async (homeId) => {
+    if (!homeId) return;
+    const target = homes.find(h => h.id === homeId) || (activeHome?.id === homeId ? activeHome : null);
+    const roomName = target?.name || 'this room';
+    const isCreator = target?.adminId === user?.id || (user?.email && target?.members?.[0]?.email === user.email);
+
+    const confirmMsg = isCreator
+      ? `Are you sure you want to PERMANENTLY DELETE room "${roomName}"? All expenses will be deleted for everyone.`
+      : `Are you sure you want to LEAVE room "${roomName}"?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await apiFetch(`/homes/${homeId}`, { method: 'DELETE' });
+      
+      const remainingHomes = homes.filter(h => h.id !== homeId);
+      setHomes(remainingHomes);
+      localStorage.setItem('mockHomes', JSON.stringify(remainingHomes));
+
+      if (activeHomeId === homeId) {
+        if (remainingHomes.length > 0) {
+          setActiveHomeId(remainingHomes[0].id);
+          setActiveHome(remainingHomes[0]);
+          localStorage.setItem('lastHomeId', remainingHomes[0].id);
+        } else {
+          setActiveHomeId('');
+          setActiveHome(null);
+          localStorage.removeItem('lastHomeId');
+          setExpenses([]);
+          setSettlement({ totalSpent: 0, share: 0, memberContributions: [], transfers: [] });
+        }
+      }
+
+      alert(isCreator ? `Room "${roomName}" deleted successfully.` : `Successfully left "${roomName}".`);
+      confetti({ particleCount: 40, spread: 50 });
+    } catch (err) {
+      alert('Error: ' + (err.message || 'Could not delete room'));
+    }
+  };
+
   const handleAddRoommate = async ({ name, email, phone, whatsapp, upiId }) => {
     if (!name || !name.trim() || !activeHomeId) return null;
     const cleanName = name.trim();
@@ -2115,6 +2155,6 @@ export default function useAppController() {
 
   const categoryColors = ['#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444', '#06B6D4', '#14B8A6'];
 
-  const appState = { theme, toggleTheme, canvasRef, token, setToken, user, setUser, isRegistering, setIsRegistering, authForm, setAuthForm, authError, setAuthError, showBrief, setShowBrief, homes, setHomes, activeHomeId, setActiveHomeId, activeHome, setActiveHome, isSyncingRoom, newRoommateAlert, setNewRoommateAlert, handleSyncRoom, expenses, setExpenses, settlement, setSettlement, aiInsights, setAiInsights, homeForm, setHomeForm, joinCode, setJoinCode, expenseForm, setExpenseForm, personalExpenseForm, setPersonalExpenseForm, userBudgetInput, setUserBudgetInput, homeBudgetInput, setHomeBudgetInput, editingExpenseId, setEditingExpenseId, calcSubTab, setCalcSubTab, calcTab, setCalcTab, activeTab, setActiveTab, sharedFilter, setSharedFilter, personalFilter, setPersonalFilter, showQR, setShowQR, calendarEvents, setCalendarEvents, selectedDate, setSelectedDate, newEventText, setNewEventText, profilePhone, setProfilePhone, profileUpi, setProfileUpi, isUpdatingProfile, setIsUpdatingProfile, reminders, setReminders, isSendingReminderId, setIsSendingReminderId, settlementPayments, setSettlementPayments, selectedSettlementPayee, setSelectedSettlementPayee, settlementRefId, setSettlementRefId, isSubmittingPayment, setIsSubmittingPayment, isVerifyingPaymentId, setIsVerifyingPaymentId, isListening, setIsListening, voiceDraft, setVoiceDraft, voiceError, setVoiceError, isReceiptScannerOpen, setIsReceiptScannerOpen, isAddMemberModalOpen, setIsAddMemberModalOpen, isRoomModalOpen, setIsRoomModalOpen, handleReceiptExpenseAdded, recurringTemplates, setRecurringTemplates, editingTemplate, setEditingTemplate, isAddingTemplate, setIsAddingTemplate, templateForm, setTemplateForm, isBackendConnected, setIsBackendConnected, apiFetch, loadData, loadOfflineFallback, fetchHomeData, loadOfflineHomeData, calculateOfflineSettlement, handleAuthSubmit, handleLogout, handleCreateHome, handleJoinHome, handleAddRoommate, handleRemoveRoommate, handleAddSharedExpense, handleDeleteSharedExpense, handleAddCalendarEvent, handleDeleteCalendarEvent, handleUpdateProfile, handleSendReminder, handleSubmitSettlementPayment, handleVerifySettlementPayment, handleStartVoiceRecognition, handleCommitVoiceDraft, handleApproveExpense, handleAddPersonalExpense, handleDeletePersonalExpense, handleUpdatePersonalBudget, handleUpdateHomeBudget, handleDirectSettle, handleTriggerRecurring, handleFileChange, handleExport, getWeekNumber, getWeekRange, personalExpensesTotal, myNetBalance, fixedLiabilityShare, spentAgainstBudget, filteredPersonalExpenses, filteredSharedExpenses, personalDailyChartData, personalCategoryPieData, sharedCategoryBarData, contributionGridCells, leaderboardRankings, categoryColors, calculationsData, startAddTemplate, startEditTemplate, handleSaveTemplate, handleDeleteTemplate };
+  const appState = { theme, toggleTheme, canvasRef, token, setToken, user, setUser, isRegistering, setIsRegistering, authForm, setAuthForm, authError, setAuthError, showBrief, setShowBrief, homes, setHomes, activeHomeId, setActiveHomeId, activeHome, setActiveHome, isSyncingRoom, newRoommateAlert, setNewRoommateAlert, handleSyncRoom, expenses, setExpenses, settlement, setSettlement, aiInsights, setAiInsights, homeForm, setHomeForm, joinCode, setJoinCode, expenseForm, setExpenseForm, personalExpenseForm, setPersonalExpenseForm, userBudgetInput, setUserBudgetInput, homeBudgetInput, setHomeBudgetInput, editingExpenseId, setEditingExpenseId, calcSubTab, setCalcSubTab, calcTab, setCalcTab, activeTab, setActiveTab, sharedFilter, setSharedFilter, personalFilter, setPersonalFilter, showQR, setShowQR, calendarEvents, setCalendarEvents, selectedDate, setSelectedDate, newEventText, setNewEventText, profilePhone, setProfilePhone, profileUpi, setProfileUpi, isUpdatingProfile, setIsUpdatingProfile, reminders, setReminders, isSendingReminderId, setIsSendingReminderId, settlementPayments, setSettlementPayments, selectedSettlementPayee, setSelectedSettlementPayee, settlementRefId, setSettlementRefId, isSubmittingPayment, setIsSubmittingPayment, isVerifyingPaymentId, setIsVerifyingPaymentId, isListening, setIsListening, voiceDraft, setVoiceDraft, voiceError, setVoiceError, isReceiptScannerOpen, setIsReceiptScannerOpen, isAddMemberModalOpen, setIsAddMemberModalOpen, isRoomModalOpen, setIsRoomModalOpen, handleReceiptExpenseAdded, recurringTemplates, setRecurringTemplates, editingTemplate, setEditingTemplate, isAddingTemplate, setIsAddingTemplate, templateForm, setTemplateForm, isBackendConnected, setIsBackendConnected, apiFetch, loadData, loadOfflineFallback, fetchHomeData, loadOfflineHomeData, calculateOfflineSettlement, handleAuthSubmit, handleLogout, handleCreateHome, handleJoinHome, handleDeleteHome, handleAddRoommate, handleRemoveRoommate, handleAddSharedExpense, handleDeleteSharedExpense, handleAddCalendarEvent, handleDeleteCalendarEvent, handleUpdateProfile, handleSendReminder, handleSubmitSettlementPayment, handleVerifySettlementPayment, handleStartVoiceRecognition, handleCommitVoiceDraft, handleApproveExpense, handleAddPersonalExpense, handleDeletePersonalExpense, handleUpdatePersonalBudget, handleUpdateHomeBudget, handleDirectSettle, handleTriggerRecurring, handleFileChange, handleExport, getWeekNumber, getWeekRange, personalExpensesTotal, myNetBalance, fixedLiabilityShare, spentAgainstBudget, filteredPersonalExpenses, filteredSharedExpenses, personalDailyChartData, personalCategoryPieData, sharedCategoryBarData, contributionGridCells, leaderboardRankings, categoryColors, calculationsData, startAddTemplate, startEditTemplate, handleSaveTemplate, handleDeleteTemplate };
   return appState;
 }

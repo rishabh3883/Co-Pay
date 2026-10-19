@@ -12,7 +12,8 @@ import {
   Share2, 
   X, 
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -23,7 +24,8 @@ export default function RoommatesRosterModal({
   user,
   onSync,
   isSyncing,
-  onOpenAddMember
+  onOpenAddMember,
+  onDeleteHome
 }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -309,7 +311,22 @@ export default function RoommatesRosterModal({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+            {onDeleteHome && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onDeleteHome(activeHome.id);
+                }}
+                className="flex-1 sm:flex-none bg-white hover:bg-[#D02020] hover:text-white text-[#D02020] border-2 border-[#121212] px-3.5 py-2.5 text-xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
+                title={adminId === user?.id ? "Delete this room workspace permanently" : "Leave this room"}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{adminId === user?.id ? "DELETE ROOM" : "LEAVE ROOM"}</span>
+              </button>
+            )}
+
             {onOpenAddMember && (
               <button
                 type="button"
@@ -320,7 +337,7 @@ export default function RoommatesRosterModal({
                 className="flex-1 sm:flex-none bg-[#1040C0] hover:bg-[#0c3196] text-white border-2 border-[#121212] px-4 py-2.5 text-xs font-black uppercase cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ ADD ANOTHER FLAT MATE</span>
+                <span>+ ADD FLAT MATE</span>
               </button>
             )}
 

@@ -387,6 +387,18 @@ export default function AppView() {
                           <span>ENTER &rarr;</span>
                         </button>
                       </div>
+
+                      {appState.handleDeleteHome && (
+                        <button
+                          type="button"
+                          onClick={() => appState.handleDeleteHome(h.id)}
+                          className="w-full bg-white hover:bg-[#D02020] hover:text-white text-[#D02020] border-2 border-[#121212] py-1.5 text-3xs font-black uppercase tracking-wider cursor-pointer transition-colors flex items-center justify-center gap-1 mt-1 shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                          title={isCreated ? "Permanently delete this room workspace" : "Leave this room"}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>{isCreated ? "DELETE ROOM (CREATOR)" : "LEAVE ROOM"}</span>
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -882,6 +894,18 @@ export default function AppView() {
                 <Users className="w-3 h-3" />
                 <span>+ ADD / INVITE</span>
               </button>
+
+              {appState.handleDeleteHome && (
+                <button
+                  type="button"
+                  onClick={() => appState.handleDeleteHome(currentHome.id)}
+                  className="bg-white hover:bg-[#D02020] hover:text-white text-[#D02020] border-2 border-[#121212] px-2.5 py-1.5 text-3xs font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-1"
+                  title={currentHome.adminId === user?.id ? "Delete this room workspace permanently" : "Leave this room"}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span className="hidden sm:inline">{currentHome.adminId === user?.id ? "DELETE ROOM" : "LEAVE ROOM"}</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -919,6 +943,7 @@ export default function AppView() {
           joinCode={joinCode}
           setJoinCode={setJoinCode}
           handleJoinHome={handleJoinHome}
+          onDeleteHome={appState.handleDeleteHome}
           onViewRoommates={(h) => {
             setSelectedRosterHome(h);
             setIsRosterModalOpen(true);
@@ -937,6 +962,7 @@ export default function AppView() {
           onSync={appState.handleSyncRoom}
           isSyncing={appState.isSyncingRoom}
           onOpenAddMember={() => setIsAddMemberModalOpen(true)}
+          onDeleteHome={appState.handleDeleteHome}
         />
 
         {/* AI Voice Expense Entry Preview Draft Modal */}
