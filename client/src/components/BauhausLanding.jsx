@@ -27,7 +27,7 @@ export default function BauhausLanding({
   onOpenRegister
 }) {
   const [activeAccordion, setActiveAccordion] = useState(0);
-  const [demoStep, setDemoStep] = useState(0);
+  const [simulationStep, setSimulationStep] = useState(0);
 
   const faqs = [
     {
@@ -159,7 +159,7 @@ export default function BauhausLanding({
                 onClick={onEnterApp}
                 className="bg-[#F0C020] text-[#121212] border-4 border-[#121212] font-black uppercase text-sm sm:text-base px-8 py-4 bauhaus-shadow-md bauhaus-btn-press cursor-pointer hover:bg-[#F0C020]/90 transition-colors"
               >
-                Explore Live Demo
+                Open Platform
               </button>
             </div>
 
@@ -374,17 +374,17 @@ export default function BauhausLanding({
               MATHEMATICAL SOLVER
             </span>
             <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter leading-tight">
-              GREEDY MINIMUM TRANSFER DEMONSTRATOR.
+              GREEDY MINIMUM TRANSFER SIMULATOR.
             </h2>
             <p className="text-base text-white/90 leading-relaxed">
               Why send six confused micro-payments when two direct transfers achieve mathematically perfect zero-sum equilibrium?
             </p>
             
             <button
-              onClick={() => setDemoStep((s) => (s + 1) % simulationEvents.length)}
+              onClick={() => setSimulationStep((s) => (s + 1) % simulationEvents.length)}
               className="bg-[#F0C020] text-[#121212] border-4 border-[#121212] font-black uppercase text-sm px-6 py-3.5 bauhaus-shadow-sm bauhaus-btn-press cursor-pointer hover:bg-[#F0C020]/90 transition-colors flex items-center gap-2"
             >
-              <span>Step Demonstration ({demoStep + 1}/{simulationEvents.length})</span>
+              <span>Next Simulation Step ({simulationStep + 1}/{simulationEvents.length})</span>
               <ArrowRight className="w-4 h-4 stroke-[3]" />
             </button>
           </div>
@@ -398,7 +398,7 @@ export default function BauhausLanding({
 
               <div className="space-y-3 pt-2">
                 {simulationEvents.map((evt, idx) => {
-                  const isCurrent = idx === demoStep;
+                  const isCurrent = idx === simulationStep;
                   return (
                     <div
                       key={idx}

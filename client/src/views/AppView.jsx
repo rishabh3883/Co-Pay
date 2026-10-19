@@ -85,7 +85,7 @@ export default function AppView() {
     settlementRefId, setSettlementRefId,
     handleSubmitSettlementPayment, isSubmittingPayment,
     categoryColors, calculationsData,
-    handleLogout, handleAuthSubmit, handleQuickDemoLogin,
+    handleLogout, handleAuthSubmit,
   } = appState;
 
   // Sidebar state
@@ -230,20 +230,6 @@ export default function AppView() {
               }`}
             >
               {isRegistering ? 'REGISTER ACCOUNT &rarr;' : 'SIGN IN & CONTINUE &rarr;'}
-            </button>
-
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t-2 border-[#121212]"></div>
-              <span className="flex-shrink mx-2 text-3xs font-black uppercase tracking-widest text-gray-500">OR QUICK ACCESS</span>
-              <div className="flex-grow border-t-2 border-[#121212]"></div>
-            </div>
-
-            <button 
-              type="button"
-              onClick={handleQuickDemoLogin}
-              className="w-full bg-[#F0C020] hover:bg-[#ebd564] text-[#121212] border-3 border-[#121212] font-black uppercase text-xs py-2.5 shadow-[3px_3px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
-            >
-              <span>⚡ 1-CLICK INSTANT DEMO ENTRY</span>
             </button>
           </form>
 
