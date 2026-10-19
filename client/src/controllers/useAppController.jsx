@@ -228,6 +228,7 @@ export default function useAppController() {
 
   // AI OCR Receipt Scanner Modal state
   const [isReceiptScannerOpen, setIsReceiptScannerOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
   useEffect(() => {
     if (!activeHomeId) {
@@ -568,28 +569,32 @@ export default function useAppController() {
       if (isBackendConnected) {
         const newHome = await apiFetch('/homes', {
           method: 'POST',
-          body: JSON.stringify({ name: homeForm.name, monthlyBudget: Number(homeForm.monthlyBudget) })
+          body: JSON.stringify({ name: homeForm.name, monthlyBudget: Number(homeForm.monthlyBudget) || 0 })
         });
         setHomes([...homes, newHome]);
         setActiveHomeId(newHome.id);
+        setActiveHome(newHome);
       } else {
         const newHome = {
           id: 'home-' + Math.random().toString(36).substring(2, 9),
           name: homeForm.name,
           inviteCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
           adminId: user?.id || 'offline-user-1',
-          monthlyBudget: Number(homeForm.monthlyBudget),
+          monthlyBudget: Number(homeForm.monthlyBudget) || 0,
           members: [
-            { id: user?.id || 'offline-user-1', name: user?.name || 'Roommate', email: user?.email || 'me@copay.io', streaks: 1, badges: ['Creator'] }
+            { id: user?.id || 'offline-user-1', name: user?.name || 'Roommate', email: user?.email || 'me@copay.io', phone: user?.phone || '', whatsapp: user?.phone || '', streaks: 1, badges: ['Creator'] }
           ]
         };
         const updated = [...homes, newHome];
         setHomes(updated);
         localStorage.setItem('mockHomes', JSON.stringify(updated));
         setActiveHomeId(newHome.id);
+        setActiveHome(newHome);
       }
-      setHomeForm({ name: '', monthlyBudget: '15000' });
+      setHomeForm({ name: '', monthlyBudget: '' });
       confetti({ particleCount: 100, spread: 60 });
+      // Automatically pop open the Add Members modal after creating room
+      setIsAddMemberModalOpen(true);
     } catch (err) {
       alert('Error creating workspace');
     }
@@ -652,13 +657,17 @@ export default function useAppController() {
     }
   };
 
-  const handleAddRoommate = async ({ name, email, upiId }) => {
+  const handleAddRoommate = async ({ name, email, phone, whatsapp, upiId }) => {
     if (!name || !name.trim() || !activeHomeId) return null;
     const cleanName = name.trim();
+    const cleanPhone = phone?.trim() || '';
+    const cleanWhatsapp = whatsapp?.trim() || cleanPhone;
     const newMember = {
       id: 'rm-' + Math.random().toString(36).substring(2, 9),
       name: cleanName,
       email: email?.trim() || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}@copay.io`,
+      phone: cleanPhone,
+      whatsapp: cleanWhatsapp,
       upiId: upiId?.trim() || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}@upi`,
       streaks: 0,
       badges: ['Roommate']
@@ -1794,6 +1803,6 @@ export default function useAppController() {
 
   const categoryColors = ['#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444', '#06B6D4', '#14B8A6'];
 
-  const appState = { theme, toggleTheme, canvasRef, token, setToken, user, setUser, isRegistering, setIsRegistering, authForm, setAuthForm, authError, setAuthError, showBrief, setShowBrief, homes, setHomes, activeHomeId, setActiveHomeId, activeHome, setActiveHome, expenses, setExpenses, settlement, setSettlement, aiInsights, setAiInsights, homeForm, setHomeForm, joinCode, setJoinCode, expenseForm, setExpenseForm, personalExpenseForm, setPersonalExpenseForm, userBudgetInput, setUserBudgetInput, homeBudgetInput, setHomeBudgetInput, editingExpenseId, setEditingExpenseId, calcSubTab, setCalcSubTab, calcTab, setCalcTab, activeTab, setActiveTab, sharedFilter, setSharedFilter, personalFilter, setPersonalFilter, showQR, setShowQR, calendarEvents, setCalendarEvents, selectedDate, setSelectedDate, newEventText, setNewEventText, profilePhone, setProfilePhone, profileUpi, setProfileUpi, isUpdatingProfile, setIsUpdatingProfile, reminders, setReminders, isSendingReminderId, setIsSendingReminderId, settlementPayments, setSettlementPayments, selectedSettlementPayee, setSelectedSettlementPayee, settlementRefId, setSettlementRefId, isSubmittingPayment, setIsSubmittingPayment, isVerifyingPaymentId, setIsVerifyingPaymentId, isListening, setIsListening, voiceDraft, setVoiceDraft, voiceError, setVoiceError, isReceiptScannerOpen, setIsReceiptScannerOpen, handleReceiptExpenseAdded, recurringTemplates, setRecurringTemplates, editingTemplate, setEditingTemplate, isAddingTemplate, setIsAddingTemplate, templateForm, setTemplateForm, isBackendConnected, setIsBackendConnected, apiFetch, loadData, loadOfflineFallback, fetchHomeData, loadOfflineHomeData, calculateOfflineSettlement, handleAuthSubmit, handleQuickDemoLogin, handleLogout, handleCreateHome, handleJoinHome, handleAddRoommate, handleRemoveRoommate, handleAddSharedExpense, handleDeleteSharedExpense, handleAddCalendarEvent, handleDeleteCalendarEvent, handleUpdateProfile, handleSendReminder, handleSubmitSettlementPayment, handleVerifySettlementPayment, handleStartVoiceRecognition, handleCommitVoiceDraft, handleApproveExpense, handleAddPersonalExpense, handleDeletePersonalExpense, handleUpdatePersonalBudget, handleUpdateHomeBudget, handleDirectSettle, handleTriggerRecurring, handleFileChange, handleExport, getWeekNumber, getWeekRange, personalExpensesTotal, myNetBalance, fixedLiabilityShare, spentAgainstBudget, filteredPersonalExpenses, filteredSharedExpenses, personalDailyChartData, personalCategoryPieData, sharedCategoryBarData, contributionGridCells, leaderboardRankings, categoryColors, calculationsData, startAddTemplate, startEditTemplate, handleSaveTemplate, handleDeleteTemplate };
+  const appState = { theme, toggleTheme, canvasRef, token, setToken, user, setUser, isRegistering, setIsRegistering, authForm, setAuthForm, authError, setAuthError, showBrief, setShowBrief, homes, setHomes, activeHomeId, setActiveHomeId, activeHome, setActiveHome, expenses, setExpenses, settlement, setSettlement, aiInsights, setAiInsights, homeForm, setHomeForm, joinCode, setJoinCode, expenseForm, setExpenseForm, personalExpenseForm, setPersonalExpenseForm, userBudgetInput, setUserBudgetInput, homeBudgetInput, setHomeBudgetInput, editingExpenseId, setEditingExpenseId, calcSubTab, setCalcSubTab, calcTab, setCalcTab, activeTab, setActiveTab, sharedFilter, setSharedFilter, personalFilter, setPersonalFilter, showQR, setShowQR, calendarEvents, setCalendarEvents, selectedDate, setSelectedDate, newEventText, setNewEventText, profilePhone, setProfilePhone, profileUpi, setProfileUpi, isUpdatingProfile, setIsUpdatingProfile, reminders, setReminders, isSendingReminderId, setIsSendingReminderId, settlementPayments, setSettlementPayments, selectedSettlementPayee, setSelectedSettlementPayee, settlementRefId, setSettlementRefId, isSubmittingPayment, setIsSubmittingPayment, isVerifyingPaymentId, setIsVerifyingPaymentId, isListening, setIsListening, voiceDraft, setVoiceDraft, voiceError, setVoiceError, isReceiptScannerOpen, setIsReceiptScannerOpen, isAddMemberModalOpen, setIsAddMemberModalOpen, handleReceiptExpenseAdded, recurringTemplates, setRecurringTemplates, editingTemplate, setEditingTemplate, isAddingTemplate, setIsAddingTemplate, templateForm, setTemplateForm, isBackendConnected, setIsBackendConnected, apiFetch, loadData, loadOfflineFallback, fetchHomeData, loadOfflineHomeData, calculateOfflineSettlement, handleAuthSubmit, handleQuickDemoLogin, handleLogout, handleCreateHome, handleJoinHome, handleAddRoommate, handleRemoveRoommate, handleAddSharedExpense, handleDeleteSharedExpense, handleAddCalendarEvent, handleDeleteCalendarEvent, handleUpdateProfile, handleSendReminder, handleSubmitSettlementPayment, handleVerifySettlementPayment, handleStartVoiceRecognition, handleCommitVoiceDraft, handleApproveExpense, handleAddPersonalExpense, handleDeletePersonalExpense, handleUpdatePersonalBudget, handleUpdateHomeBudget, handleDirectSettle, handleTriggerRecurring, handleFileChange, handleExport, getWeekNumber, getWeekRange, personalExpensesTotal, myNetBalance, fixedLiabilityShare, spentAgainstBudget, filteredPersonalExpenses, filteredSharedExpenses, personalDailyChartData, personalCategoryPieData, sharedCategoryBarData, contributionGridCells, leaderboardRankings, categoryColors, calculationsData, startAddTemplate, startEditTemplate, handleSaveTemplate, handleDeleteTemplate };
   return appState;
 }

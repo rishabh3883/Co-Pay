@@ -28,7 +28,10 @@ import {
   Mic,
   Camera,
   Volume2,
-  PhoneCall
+  PhoneCall,
+  Phone,
+  MessageSquare,
+  Mail
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -50,6 +53,9 @@ export default function SharedTab(props) {
 
   const [isAddingRoommate, setIsAddingRoommate] = useState(false);
   const [newRoommateName, setNewRoommateName] = useState('');
+  const [newRoommatePhone, setNewRoommatePhone] = useState('');
+  const [newRoommateWhatsapp, setNewRoommateWhatsapp] = useState('');
+  const [newRoommateEmail, setNewRoommateEmail] = useState('');
   const [newRoommateUpi, setNewRoommateUpi] = useState('');
 
   return (
@@ -210,7 +216,13 @@ export default function SharedTab(props) {
                         </span>
                         <button
                           type="button"
-                          onClick={() => setIsAddingRoommate(!isAddingRoommate)}
+                          onClick={() => {
+                            if (props.setIsAddMemberModalOpen) {
+                              props.setIsAddMemberModalOpen(true);
+                            } else {
+                              setIsAddingRoommate(!isAddingRoommate);
+                            }
+                          }}
                           className="text-4xs font-mono text-purple-400 hover:text-purple-300 uppercase underline cursor-pointer"
                         >
                           {isAddingRoommate ? 'Cancel' : '+ Add Roommate'}
@@ -218,27 +230,61 @@ export default function SharedTab(props) {
                       </div>
 
                       {isAddingRoommate && (
-                        <div className="bg-gray-950 p-2.5 rounded border border-purple-500/30 space-y-2 text-xs">
+                        <div className="bg-gray-950 p-3 rounded-lg border border-purple-500/30 space-y-2 text-xs">
                           <input 
                             type="text"
-                            placeholder="Roommate Name (e.g. Rahul)"
+                            placeholder="Full Name (e.g. Rahul Sharma) *"
                             value={newRoommateName}
                             onChange={e => setNewRoommateName(e.target.value)}
                             className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white"
                           />
-                          <input 
-                            type="text"
-                            placeholder="Optional UPI ID (e.g. rahul@upi)"
-                            value={newRoommateUpi}
-                            onChange={e => setNewRoommateUpi(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
-                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input 
+                              type="tel"
+                              placeholder="Phone Number"
+                              value={newRoommatePhone}
+                              onChange={e => setNewRoommatePhone(e.target.value)}
+                              className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                            />
+                            <input 
+                              type="tel"
+                              placeholder="WhatsApp Number"
+                              value={newRoommateWhatsapp}
+                              onChange={e => setNewRoommateWhatsapp(e.target.value)}
+                              className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input 
+                              type="email"
+                              placeholder="Email Address"
+                              value={newRoommateEmail}
+                              onChange={e => setNewRoommateEmail(e.target.value)}
+                              className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white"
+                            />
+                            <input 
+                              type="text"
+                              placeholder="Optional UPI ID"
+                              value={newRoommateUpi}
+                              onChange={e => setNewRoommateUpi(e.target.value)}
+                              className="w-full bg-gray-900 border border-gray-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
                               if (newRoommateName.trim() && props.handleAddRoommate) {
-                                props.handleAddRoommate({ name: newRoommateName, upiId: newRoommateUpi });
+                                props.handleAddRoommate({ 
+                                  name: newRoommateName, 
+                                  phone: newRoommatePhone,
+                                  whatsapp: newRoommateWhatsapp || newRoommatePhone,
+                                  email: newRoommateEmail,
+                                  upiId: newRoommateUpi 
+                                });
                                 setNewRoommateName('');
+                                setNewRoommatePhone('');
+                                setNewRoommateWhatsapp('');
+                                setNewRoommateEmail('');
                                 setNewRoommateUpi('');
                                 setIsAddingRoommate(false);
                               }
@@ -250,29 +296,73 @@ export default function SharedTab(props) {
                         </div>
                       )}
 
-                      <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                        {activeHome.members?.map(m => (
-                          <div key={m.id} className="flex items-center gap-2 text-xs bg-gray-950/40 p-2 rounded border border-gray-900">
-                            <div className="w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 font-bold flex items-center justify-center text-4xs">
-                              {m.name.charAt(0)}
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        {activeHome.members?.map(m => {
+                          const waClean = (m.whatsapp || m.phone || '').replace(/[^0-9]/g, '');
+                          const phoneClean = (m.phone || '').replace(/[^0-9+]/g, '');
+
+                          return (
+                            <div key={m.id} className="flex items-center gap-2 text-xs bg-gray-950/50 p-2 rounded border border-gray-900">
+                              <div className="w-6 h-6 rounded-full bg-indigo-900 text-indigo-300 font-bold flex items-center justify-center text-4xs shrink-0">
+                                {m.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-gray-200 truncate">{m.name}</span>
+                                  {activeHome.adminId === m.id && (
+                                    <span className="text-4xs bg-purple-950 text-purple-300 px-1 py-0.2 rounded font-mono border border-purple-500/20">Admin</span>
+                                  )}
+                                </div>
+                                <span className="text-4xs text-gray-500 font-mono block truncate">
+                                  {m.phone || m.email || ''}
+                                </span>
+                              </div>
+
+                              {/* Interactive Contact Actions */}
+                              <div className="flex items-center gap-1 ml-auto shrink-0">
+                                {waClean && (
+                                  <a
+                                    href={`https://wa.me/${waClean}?text=${encodeURIComponent(`Hey ${m.name}, check our Co-Pay room expenses!`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded transition-colors"
+                                    title={`WhatsApp: ${m.whatsapp || m.phone}`}
+                                  >
+                                    <MessageSquare className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {phoneClean && (
+                                  <a
+                                    href={`tel:${phoneClean}`}
+                                    className="p-1 bg-blue-950 hover:bg-blue-900 text-blue-400 border border-blue-800 rounded transition-colors"
+                                    title={`Call: ${m.phone}`}
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {m.email && (
+                                  <a
+                                    href={`mailto:${m.email}`}
+                                    className="p-1 bg-gray-900 hover:bg-gray-800 text-gray-400 border border-gray-700 rounded transition-colors"
+                                    title={`Email: ${m.email}`}
+                                  >
+                                    <Mail className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {props.handleRemoveRoommate && m.id !== activeHome.adminId && m.id !== user?.id && (
+                                  <button
+                                    type="button"
+                                    onClick={() => props.handleRemoveRoommate(m.id)}
+                                    className="text-gray-500 hover:text-red-400 text-4xs font-mono p-1 cursor-pointer"
+                                    title="Remove roommate"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <span className="font-medium text-gray-300 truncate">{m.name}</span>
-                            {activeHome.adminId === m.id ? (
-                              <span className="text-4xs bg-purple-950 text-purple-300 px-1 py-0.2 rounded font-mono border border-purple-500/20 ml-auto">Admin</span>
-                            ) : (
-                              props.handleRemoveRoommate && m.id !== user?.id && (
-                                <button
-                                  type="button"
-                                  onClick={() => props.handleRemoveRoommate(m.id)}
-                                  className="text-gray-500 hover:text-red-400 text-4xs font-mono ml-auto cursor-pointer"
-                                  title="Remove roommate"
-                                >
-                                  ✕
-                                </button>
-                              )
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import FlatmateMessengerTab from '../components/FlatmateMessengerTab';
 import ContributionDashboard from '../components/ContributionDashboard';
 import BauhausLanding from '../components/BauhausLanding';
 import ReceiptScannerModal from '../components/ReceiptScannerModal';
+import AddMemberModal from '../components/AddMemberModal';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   DollarSign, 
@@ -78,6 +79,7 @@ export default function AppView() {
     handleStartVoiceRecognition, handleCommitVoiceDraft,
     voiceError, setVoiceError,
     isReceiptScannerOpen, setIsReceiptScannerOpen,
+    isAddMemberModalOpen, setIsAddMemberModalOpen,
     handleReceiptExpenseAdded,
     selectedSettlementPayee, setSelectedSettlementPayee,
     settlementRefId, setSettlementRefId,
@@ -576,6 +578,18 @@ export default function AppView() {
             </span>
           </button>
 
+          {/* Quick Add Member Button */}
+          {activeHome && (
+            <button
+              onClick={() => setIsAddMemberModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1040C0] hover:bg-[#0c3196] text-white border-3 border-[#121212] text-xs font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#121212] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+              title="Add Member to Room"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">+ ADD MEMBER</span>
+            </button>
+          )}
+
           {/* User avatar circular badge */}
           <div className="flex items-center bg-white border-3 border-[#121212] px-2.5 py-1 gap-2 shadow-[3px_3px_0px_0px_#121212]">
             <div className="w-6 h-6 rounded-full bg-[#1040C0] border-2 border-[#121212] flex items-center justify-center font-black text-white text-3xs uppercase">
@@ -596,6 +610,16 @@ export default function AppView() {
           activeHome={activeHome}
           user={user}
           onExpenseAdded={handleReceiptExpenseAdded}
+        />
+
+        {/* Room Member Addition Onboarding Modal */}
+        <AddMemberModal
+          isOpen={isAddMemberModalOpen}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          activeHome={activeHome}
+          user={user}
+          onAddMember={handleAddRoommate}
+          onRemoveMember={handleRemoveRoommate}
         />
 
         {/* AI Voice Expense Entry Preview Draft Modal */}
