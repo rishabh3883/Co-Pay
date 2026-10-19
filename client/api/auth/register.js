@@ -30,17 +30,18 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = await parseBody(req);
-    const safeName = body.name?.trim() || (body.email ? body.email.split('@')[0] : 'Roommate');
     const safeEmail = body.email?.trim() || 'user@copay.io';
-    const token = 'jwt_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const safeName = body.name?.trim() || (safeEmail ? safeEmail.split('@')[0] : 'Roommate');
+    const userPayload = {
+      id: 'usr_' + Math.random().toString(36).substring(2, 9),
+      name: safeName,
+      email: safeEmail
+    };
+    const token = 'jwt_' + Buffer.from(JSON.stringify(userPayload)).toString('base64');
 
     return res.status(200).json({
       token,
-      user: {
-        id: 'usr_' + Math.random().toString(36).substring(2, 9),
-        name: safeName,
-        email: safeEmail
-      }
+      user: userPayload
     });
   }
 

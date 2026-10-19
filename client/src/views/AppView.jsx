@@ -9,6 +9,7 @@ import ContributionDashboard from '../components/ContributionDashboard';
 import BauhausLanding from '../components/BauhausLanding';
 import ReceiptScannerModal from '../components/ReceiptScannerModal';
 import AddMemberModal from '../components/AddMemberModal';
+import ProfileSettings from '../components/ProfileSettings';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   DollarSign, 
@@ -461,14 +462,20 @@ export default function AppView() {
 
         {/* Sidebar footer — user */}
         <div className="p-4 border-t-4 border-[#121212] bg-white">
-          <div className="flex items-center gap-3 p-2 bg-[#F0F0F0] border-3 border-[#121212]">
-            <div className="w-9 h-9 rounded-full bg-[#D02020] border-2 border-[#121212] flex items-center justify-center font-black text-white text-xs uppercase shadow-[2px_2px_0px_0px_#121212] shrink-0">
-              {(user?.name || 'C').charAt(0)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-black text-[#121212] uppercase truncate">{user?.name || 'Curious Coder'}</p>
-              <p className="text-[10px] text-[#404040] font-mono truncate">{user?.email || ''}</p>
-            </div>
+          <div className="flex items-center gap-3 p-2 bg-[#F0F0F0] hover:bg-[#F0C020]/25 border-3 border-[#121212] transition-colors">
+            <button
+              onClick={() => { setActiveTab('profile'); setSidebarOpen(false); }}
+              className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
+              title="Open Profile Settings"
+            >
+              <div className="w-9 h-9 rounded-full bg-[#D02020] border-2 border-[#121212] flex items-center justify-center font-black text-white text-xs uppercase shadow-[2px_2px_0px_0px_#121212] shrink-0">
+                {(user?.name || 'U').charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black text-[#121212] uppercase truncate">{user?.name || 'Roommate'}</p>
+                <p className="text-[10px] text-[#404040] font-mono truncate">{user?.email || ''}</p>
+              </div>
+            </button>
             <button
               onClick={handleLogout}
               className="p-1.5 bg-white hover:bg-[#D02020] text-[#121212] hover:text-white border-2 border-[#121212] transition-colors cursor-pointer shadow-[2px_2px_0px_0px_#121212] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
@@ -576,13 +583,17 @@ export default function AppView() {
             </button>
           )}
 
-          {/* User avatar circular badge */}
-          <div className="flex items-center bg-white border-3 border-[#121212] px-2.5 py-1 gap-2 shadow-[3px_3px_0px_0px_#121212]">
+          {/* User avatar button leading to Profile */}
+          <button
+            onClick={() => setActiveTab('profile')}
+            title="Open Profile Settings"
+            className="flex items-center bg-white hover:bg-[#F0C020] border-3 border-[#121212] px-2.5 py-1 gap-2 shadow-[3px_3px_0px_0px_#121212] cursor-pointer transition-colors active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          >
             <div className="w-6 h-6 rounded-full bg-[#1040C0] border-2 border-[#121212] flex items-center justify-center font-black text-white text-3xs uppercase">
-              {(user?.name || 'C').charAt(0)}
+              {(user?.name || 'U').charAt(0)}
             </div>
-            <span className="text-xs font-black text-[#121212] uppercase hidden lg:inline select-none">{user?.name || 'User'}</span>
-          </div>
+            <span className="text-xs font-black text-[#121212] uppercase hidden lg:inline select-none">{user?.name || 'Profile'}</span>
+          </button>
         </div>
       </header>
 
@@ -749,6 +760,7 @@ export default function AppView() {
         {activeTab === 'calculations' && <CalculationsTab {...appState} />}
         {activeTab === 'needs' && <NeedsChatTab {...appState} />}
         {activeTab === 'messenger' && <FlatmateMessengerTab {...appState} />}
+        {activeTab === 'profile' && <ProfileSettings {...appState} />}
         {activeTab === 'contributions' && (
           <ContributionDashboard
             user={appState.user}

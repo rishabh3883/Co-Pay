@@ -337,10 +337,33 @@ export default function useAppController() {
   const loadData = async () => {
     try {
       const userProfile = await apiFetch('/auth/me');
-      setUser(userProfile);
-      setUserBudgetInput(userProfile.personalBudget.toString());
-      setProfilePhone(userProfile.phone || '');
-      setProfileUpi(userProfile.upiId || '');
+      
+      const savedEmail = localStorage.getItem('copay_user_email') || localStorage.getItem('mockEmail');
+      const savedName = localStorage.getItem('copay_user_name') || localStorage.getItem('mockName');
+
+      const resolvedName = (userProfile?.name && userProfile.name !== 'Roommate' && userProfile.name !== 'Curious Roommate')
+        ? userProfile.name
+        : (savedName || userProfile?.name || 'Roommate');
+
+      const resolvedEmail = (userProfile?.email && userProfile.email !== 'user@copay.io' && userProfile.email !== 'offline@copay.io')
+        ? userProfile.email
+        : (savedEmail || userProfile?.email || 'user@copay.io');
+
+      const fullUser = {
+        ...(userProfile || {}),
+        name: resolvedName,
+        email: resolvedEmail,
+        phone: userProfile?.phone || localStorage.getItem('mockPhone') || '',
+        upiId: userProfile?.upiId || localStorage.getItem('mockUpiId') || '',
+        personalBudget: userProfile?.personalBudget || Number(localStorage.getItem('mockPersonalBudget') || '15000'),
+        streaks: userProfile?.streaks || 2,
+        badges: userProfile?.badges || ['Active Roommate']
+      };
+
+      setUser(fullUser);
+      setUserBudgetInput(fullUser.personalBudget.toString());
+      setProfilePhone(fullUser.phone || '');
+      setProfileUpi(fullUser.upiId || '');
 
       const userHomes = await apiFetch('/homes');
       setHomes(userHomes);
@@ -357,10 +380,12 @@ export default function useAppController() {
 
   const loadOfflineFallback = () => {
     setIsBackendConnected(false);
+    const savedName = localStorage.getItem('copay_user_name') || localStorage.getItem('mockName') || 'Roommate';
+    const savedEmail = localStorage.getItem('copay_user_email') || localStorage.getItem('mockEmail') || 'user@copay.io';
     const mockUser = {
       id: 'offline-user-1',
-      name: localStorage.getItem('mockName') || 'Curious Roommate',
-      email: localStorage.getItem('mockEmail') || 'offline@copay.io',
+      name: savedName,
+      email: savedEmail,
       personalBudget: Number(localStorage.getItem('mockPersonalBudget') || '10000'),
       phone: localStorage.getItem('mockPhone') || '',
       upiId: localStorage.getItem('mockUpiId') || '',
@@ -493,14 +518,24 @@ export default function useAppController() {
         const data = await res.json().catch(() => ({}));
         if (data.token) {
           localStorage.setItem('token', data.token);
-          if (data.user?.name) {
-            localStorage.setItem('mockName', data.user.name);
-          }
-          if (data.user?.email) {
-            localStorage.setItem('mockEmail', data.user.email);
-          }
+          const userName = data.user?.name || authForm.name || (authForm.email ? authForm.email.split('@')[0] : 'Roommate');
+          const userEmail = data.user?.email || authForm.email || 'user@copay.io';
+          localStorage.setItem('copay_user_name', userName);
+          localStorage.setItem('copay_user_email', userEmail);
+          localStorage.setItem('mockName', userName);
+          localStorage.setItem('mockEmail', userEmail);
           setIsBackendConnected(true);
           setToken(data.token);
+          setUser({
+            id: data.user?.id || 'usr_me',
+            name: userName,
+            email: userEmail,
+            personalBudget: 15000,
+            phone: localStorage.getItem('mockPhone') || '',
+            upiId: localStorage.getItem('mockUpiId') || '',
+            streaks: 2,
+            badges: ['Active Roommate']
+          });
           confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
           return;
         }
@@ -527,15 +562,26 @@ export default function useAppController() {
     // 3. If server is offline / unreachable (Vercel cloud, offline development):
     // Smoothly log into Offline Workspace without throwing network errors
     try {
-      const derivedName = authForm.name || (authForm.email ? authForm.email.split('@')[0] : 'Curious Roommate');
+      const derivedName = authForm.name || (authForm.email ? authForm.email.split('@')[0] : 'Roommate');
+      const safeEmail = authForm.email || 'user@copay.io';
       localStorage.setItem('token', 'offline-token-key');
+      localStorage.setItem('copay_user_name', derivedName);
+      localStorage.setItem('copay_user_email', safeEmail);
       localStorage.setItem('mockName', derivedName);
-      if (authForm.email) {
-        localStorage.setItem('mockEmail', authForm.email);
-      }
+      localStorage.setItem('mockEmail', safeEmail);
       setIsBackendConnected(false);
       setAuthError(null);
       setToken('offline-token-key');
+      setUser({
+        id: 'offline-user-1',
+        name: derivedName,
+        email: safeEmail,
+        personalBudget: Number(localStorage.getItem('mockPersonalBudget') || '10000'),
+        phone: localStorage.getItem('mockPhone') || '',
+        upiId: localStorage.getItem('mockUpiId') || '',
+        streaks: 1,
+        badges: ['Roommate']
+      });
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     } catch (localErr) {
       setAuthError('Authentication error: ' + localErr.message);
@@ -546,6 +592,10 @@ export default function useAppController() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('lastHomeId');
+    localStorage.removeItem('copay_user_name');
+    localStorage.removeItem('copay_user_email');
+    localStorage.removeItem('mockName');
+    localStorage.removeItem('mockEmail');
     setToken(null);
     setUser(null);
     confetti({ particleCount: 50, spread: 40 });
@@ -863,28 +913,6 @@ export default function useAppController() {
     localStorage.setItem(`copay_calendar_events_${activeHomeId}`, JSON.stringify(updated));
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    setIsUpdatingProfile(true);
-    try {
-      if (isBackendConnected) {
-        const res = await apiFetch('/auth/profile', {
-          method: 'PUT',
-          body: JSON.stringify({ phone: profilePhone, upiId: profileUpi })
-        });
-        setUser(prev => ({ ...prev, phone: res.phone, upiId: res.upiId }));
-      } else {
-        localStorage.setItem('mockPhone', profilePhone);
-        localStorage.setItem('mockUpiId', profileUpi);
-        setUser(prev => ({ ...prev, phone: profilePhone, upiId: profileUpi }));
-      }
-      alert('Profile updated successfully!');
-    } catch (err) {
-      alert('Failed to update profile: ' + err.message);
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
 
   const handleSendReminder = async (transfer) => {
     setIsSendingReminderId(transfer.fromId);
@@ -1378,6 +1406,88 @@ export default function useAppController() {
       alert('Personal budget limit configured!');
     } catch (err) {
       alert('Failed to configure budget');
+    }
+  };
+
+  const handleUpdateProfile = async (formDataOrEvent) => {
+    if (formDataOrEvent && formDataOrEvent.preventDefault) {
+      formDataOrEvent.preventDefault();
+    }
+    setIsUpdatingProfile(true);
+    try {
+      const updatedName = (formDataOrEvent?.name !== undefined ? formDataOrEvent.name : user?.name)?.trim() || 'Roommate';
+      const updatedEmail = (formDataOrEvent?.email !== undefined ? formDataOrEvent.email : user?.email)?.trim() || 'user@copay.io';
+      const updatedPhone = (formDataOrEvent?.phone !== undefined ? formDataOrEvent.phone : profilePhone)?.trim() || '';
+      const updatedUpi = (formDataOrEvent?.upiId !== undefined ? formDataOrEvent.upiId : profileUpi)?.trim() || '';
+      const updatedBudget = Number(formDataOrEvent?.personalBudget || userBudgetInput || user?.personalBudget || 15000);
+
+      // Persist to local storage
+      localStorage.setItem('copay_user_name', updatedName);
+      localStorage.setItem('copay_user_email', updatedEmail);
+      localStorage.setItem('mockName', updatedName);
+      localStorage.setItem('mockEmail', updatedEmail);
+      localStorage.setItem('mockPhone', updatedPhone);
+      localStorage.setItem('mockUpiId', updatedUpi);
+      localStorage.setItem('mockPersonalBudget', updatedBudget.toString());
+
+      setProfilePhone(updatedPhone);
+      setProfileUpi(updatedUpi);
+      setUserBudgetInput(updatedBudget.toString());
+
+      const nextUser = {
+        ...(user || {}),
+        name: updatedName,
+        email: updatedEmail,
+        phone: updatedPhone,
+        upiId: updatedUpi,
+        personalBudget: updatedBudget,
+      };
+      setUser(nextUser);
+
+      // Update room roster if activeHome exists
+      if (activeHome && activeHome.members) {
+        const updatedMembers = activeHome.members.map(m => {
+          if (m.id === user?.id || m.email === user?.email || m.email === updatedEmail) {
+            return {
+              ...m,
+              name: updatedName,
+              email: updatedEmail,
+              phone: updatedPhone,
+              whatsapp: updatedPhone,
+              upiId: updatedUpi
+            };
+          }
+          return m;
+        });
+        const updatedHome = { ...activeHome, members: updatedMembers };
+        setActiveHome(updatedHome);
+        const updatedHomes = homes.map(h => h.id === activeHome.id ? updatedHome : h);
+        setHomes(updatedHomes);
+        localStorage.setItem('mockHomes', JSON.stringify(updatedHomes));
+      }
+
+      if (isBackendConnected) {
+        try {
+          await apiFetch('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: updatedName,
+              email: updatedEmail,
+              phone: updatedPhone,
+              upiId: updatedUpi,
+              personalBudget: updatedBudget
+            })
+          });
+        } catch (_) {}
+      }
+
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      return { success: false, error: err.message };
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
