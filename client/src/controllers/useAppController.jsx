@@ -1928,17 +1928,11 @@ export default function useAppController() {
     return settlement.memberContributions.find(c => c.userId === user.id)?.netBalance || 0;
   }, [user, settlement]);
 
-  const fixedLiabilityShare = useMemo(() => {
-    if (!activeHome) return 0;
-    const membersList = activeHome.members || [];
-    const memberCount = membersList.length || 1;
-    // House Rent: ₹15,000 + Maid Salary: ₹3,000 + Fiber Internet: ₹1,200. Total = 19,200.
-    return Math.round((19200 / memberCount) * 100) / 100;
-  }, [activeHome]);
+  const fixedLiabilityShare = 0;
 
   const spentAgainstBudget = useMemo(() => {
-    return personalExpensesTotal - myNetBalance + fixedLiabilityShare;
-  }, [personalExpensesTotal, myNetBalance, fixedLiabilityShare]);
+    return personalExpensesTotal - myNetBalance;
+  }, [personalExpensesTotal, myNetBalance]);
 
   const filteredPersonalExpenses = useMemo(() => {
     if (!user) return [];

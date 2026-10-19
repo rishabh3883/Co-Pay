@@ -23,9 +23,7 @@ export default function Navbar({
   const tabs = [
     { id: 'personal', label: 'Personal' },
     { id: 'shared', label: 'Room Expenses' },
-    { id: 'balances', label: 'Balances' },
     { id: 'calendar', label: 'Calendar' },
-    { id: 'calculations', label: 'Calculations' },
     { id: 'needs', label: 'Restock Chat' },
     { id: 'messenger', label: 'Chat & Discovery' },
     { id: 'profile', label: 'Profile' },

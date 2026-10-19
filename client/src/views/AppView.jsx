@@ -1,8 +1,6 @@
 import PersonalTab from '../components/PersonalTab';
 import SharedTab from '../components/SharedTab';
-import BalancesTab from '../components/BalancesTab';
 import CalendarTab from '../components/CalendarTab';
-import CalculationsTab from '../components/CalculationsTab';
 import NeedsChatTab from '../components/NeedsChatTab';
 import FlatmateMessengerTab from '../components/FlatmateMessengerTab';
 import ContributionDashboard from '../components/ContributionDashboard';
@@ -113,7 +111,6 @@ export default function AppView() {
   // Sidebar nav items
   const sidebarItems = [
     { key: 'calendar',      label: 'Calendar',        emoji: '📅' },
-    { key: 'calculations',  label: 'Calculations',    emoji: '🧮' },
     { key: 'needs',         label: 'Restock Chat',    emoji: '🛒' },
     { key: 'contributions', label: 'Settlements',     emoji: '💰' },
     { key: 'messenger',     label: 'Chat & Connect',  emoji: '💬' },
@@ -655,17 +652,7 @@ export default function AppView() {
                 : 'bg-transparent text-[#121212] border-transparent hover:bg-white hover:border-[#121212]'
             }`}
           >
-            02 / SHARED
-          </button>
-          <button
-            onClick={() => setActiveTab('balances')}
-            className={`px-3.5 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap border-2 ${
-              activeTab === 'balances'
-                ? 'bg-[#F0C020] text-[#121212] border-[#121212] shadow-[2px_2px_0px_0px_#121212]'
-                : 'bg-transparent text-[#121212] border-transparent hover:bg-white hover:border-[#121212]'
-            }`}
-          >
-            03 / FIXED DUES
+            02 / ROOM EXPENSES
           </button>
         </nav>
 
@@ -891,9 +878,7 @@ export default function AppView() {
 
         {activeTab === 'personal' && <PersonalTab {...appState} />}
         {activeTab === 'shared' && <SharedTab {...appState} />}
-        {activeTab === 'balances' && <BalancesTab {...appState} />}
         {activeTab === 'calendar' && <CalendarTab {...appState} />}
-        {activeTab === 'calculations' && <CalculationsTab {...appState} />}
         {activeTab === 'needs' && <NeedsChatTab {...appState} />}
         {activeTab === 'messenger' && <FlatmateMessengerTab {...appState} />}
         {activeTab === 'profile' && <ProfileSettings {...appState} />}

@@ -82,12 +82,6 @@ export default function PersonalDashboard({
                   Balances: {myNetBalance >= 0 ? '+' : '-'}₹{Math.abs(myNetBalance)}
                 </span>
               </div>
-              {fixedLiabilityShare > 0 && (
-                <div className="flex justify-between border-t border-white/[0.03] pt-1 text-gray-500">
-                  <span>Fixed Dues (Rent, Maid & Internet Share):</span>
-                  <span>+₹{fixedLiabilityShare}</span>
-                </div>
-              )}
             </div>
           </div>
 
